@@ -7,5 +7,7 @@
 #include "Render/VBO.h"
 #include "Render/VAO.h"
 #include "Render/EBO.h"
+#include "Render/Shader.h"
+#include "Util/File.h"
 
 // TODO: Reference additional headers your program requires here.

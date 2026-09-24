@@ -16,7 +16,12 @@ add_executable (Xantos
 "src/Xantos.cpp" 
 "src/Xantos.h"
 "Libs/GLAD/src/glad.c"
-"Libs/STB/stb_image.cpp" "src/Render/VBO.cpp" "src/Render/VBO.h" "src/Render/VAO.cpp" "src/Render/VAO.h" "src/Render/EBO.cpp" "src/Render/EBO.h")
+"Libs/STB/stb_image.cpp" 
+"src/Render/VBO.cpp" 
+"src/Render/VAO.cpp" 
+"src/Render/EBO.cpp"
+"src/Render/Shader.cpp"
+"src/Util/File.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Xantos PROPERTY CXX_STANDARD 20)
@@ -33,4 +38,13 @@ target_include_directories(Xantos PRIVATE
 
 target_link_libraries(Xantos PRIVATE 
 "${CMAKE_CURRENT_SOURCE_DIR}/Libs/GLFW/glfw3.lib"
+)
+
+add_custom_command(TARGET Xantos POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:Xantos>/Shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/Shaders"
+        "$<TARGET_FILE_DIR:Xantos>/Shaders"
+    COMMENT "Copying Shaders to output directory..."
 )
