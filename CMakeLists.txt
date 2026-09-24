@@ -21,6 +21,7 @@ add_executable (Xantos
 "src/Render/VAO.cpp" 
 "src/Render/EBO.cpp"
 "src/Render/Shader.cpp"
+"src/Render/Camera.cpp"
 "src/Util/File.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
