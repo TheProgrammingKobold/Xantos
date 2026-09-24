@@ -16,7 +16,7 @@ add_executable (Xantos
 "src/Xantos.cpp" 
 "src/Xantos.h"
 "Libs/GLAD/src/glad.c"
-"Libs/STB/stb_image.cpp")
+"Libs/STB/stb_image.cpp" "src/Render/VBO.cpp" "src/Render/VBO.h" "src/Render/VAO.cpp" "src/Render/VAO.h" "src/Render/EBO.cpp" "src/Render/EBO.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Xantos PROPERTY CXX_STANDARD 20)

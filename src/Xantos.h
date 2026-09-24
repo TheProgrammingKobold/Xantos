@@ -4,5 +4,8 @@
 #pragma once
 
 #include <iostream>
+#include "Render/VBO.h"
+#include "Render/VAO.h"
+#include "Render/EBO.h"
 
 // TODO: Reference additional headers your program requires here.
