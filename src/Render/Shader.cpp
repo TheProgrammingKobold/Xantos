@@ -1,5 +1,7 @@
 #include "Shader.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 Shader::Shader(std::string filePathToVertex, std::string filePathToFragment)
 {
 	// Reading the shaders from the file
@@ -70,6 +72,31 @@ void Shader::activate()
 void Shader::deleteShader()
 {
 	glDeleteProgram(_ID);
+}
+
+const void Shader::setMatrix(const glm::mat4& matrix, const std::string& uniform) const
+{
+	glUniformMatrix4fv(getUniform(uniform), 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+const void Shader::setVec3(const glm::vec3& vec, const std::string& uniform) const
+{
+	glUniform3fv(getUniform(uniform), 1, glm::value_ptr(vec));
+}
+
+const void Shader::setInt(int value, const std::string& uniform) const
+{
+	glUniform1i(getUniform(uniform), value);
+}
+
+const void Shader::setFloat(float value, const std::string& uniform) const
+{
+	glUniform1f(getUniform(uniform), value);
+}
+
+const void Shader::setFloatArray(const std::vector<GLfloat>& data, const std::string& uniform) const
+{
+	glUniform1fv(getUniform(uniform), data.size(), data.data());
 }
 
 std::string Shader::_parseFileToString(std::string filepath)

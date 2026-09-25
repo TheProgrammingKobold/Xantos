@@ -18,7 +18,12 @@ public:
 
 
 	void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
+	void updateMatrix();
 	void matrix(Shader& shader, const char* uniform);
+
+	inline void setWidth(int width) { _width = width; updateMatrix(); }
+	inline void setHeight(int height) { _height = height; updateMatrix(); }
+	inline void setWidthHeight(int width, int height) { _width = width; _height = height; updateMatrix(); }
 
 
 	// Getters

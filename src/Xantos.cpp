@@ -3,48 +3,36 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <atomic>
+#include <thread>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+std::atomic<bool> running = true;
+std::atomic<int> SCR_WIDTH = 800;
+std::atomic<int> SCR_HEIGHT = 600;
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-
-int main()
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
+}
 
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Xantos", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+void render(GLFWwindow* window)
+{
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        return;
     }
 
-	Shader shader("default_vertex.shader", "default_fragment.shader");
+    Shader shader("default_vertex.shader", "default_fragment.shader");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    std::vector<Vertex> vertices = 
+    std::vector<Vertex> vertices =
     {
         //		Position						Normals						Color						TexCoords
         // Front
@@ -85,7 +73,7 @@ int main()
     };
 
 
-    std::vector<GLuint> indices = 
+    std::vector<GLuint> indices =
     {
         // Front face
         0, 1, 2, // Leftish triangle
@@ -114,7 +102,7 @@ int main()
 
     VAO vao;
     vao.bind();
-    
+
     VBO vbo(vertices);
     EBO ebo(indices);
 
@@ -127,9 +115,9 @@ int main()
     vbo.unbind();
     vao.unbind();
 
-	glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
 
-	Camera camera(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
+    Camera camera(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
     camera.updateMatrix(90.0f, 0.1f, 100.0f);
 
 
@@ -137,18 +125,16 @@ int main()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // 2. Define your angle in degrees and convert to radians
-    float angleDegrees = 0.01f;
+    float angleDegrees = 0.1f;
     float angleRadians = glm::radians(angleDegrees);
 
-	glEnable(GL_DEPTH_TEST); 
+    glEnable(GL_DEPTH_TEST);
 
     // render loop
     // -----------
-    while (!glfwWindowShouldClose(window))
+    while (running)
     {
-        // input
-        // -----
-        processInput(window);
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
         // render
         // ------
@@ -159,45 +145,60 @@ int main()
         shader.activate();
         vao.bind();
 
-		camera.matrix(shader, "camMatrix");
-        glUniformMatrix4fv(shader.getUniform("model"), 1, GL_FALSE, glm::value_ptr(model));
+        camera.setWidthHeight(SCR_WIDTH, SCR_HEIGHT);
+        camera.matrix(shader, "camMatrix");
+        shader.setMatrix(model, "model");
 
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-        model = glm::rotate(model, angleRadians, glm::vec3(0.0f, 1.0f, 0.5f));
+        model = glm::rotate(model, angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
-        glfwPollEvents();
+
+
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
     vao.deleteObject();
     vbo.deleteObject();
     ebo.deleteObject();
     shader.deleteShader();
+}
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
+int main()
+{
+    // glfw: initialize and configure
+    // ------------------------------
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // glfw window creation
+    // --------------------
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Xantos", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    std::thread renderThread(render, window);
+
+    while (running)
+    {
+        glfwPollEvents();
+
+        if (glfwWindowShouldClose(window))
+        {
+            running = false;
+        }
+    }
+
+    renderThread.join();
+
     glfwTerminate();
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
