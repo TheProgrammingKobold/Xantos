@@ -6,6 +6,9 @@
 #include <atomic>
 #include <thread>
 
+// TODO: Add text rendering. https://github.com/johnWRS/LearnOpenGLTextRenderingImprovement
+// Add thread safe event system. 
+
 std::atomic<bool> running = true;
 std::atomic<int> SCR_WIDTH = 800;
 std::atomic<int> SCR_HEIGHT = 600;
@@ -125,15 +128,21 @@ void render(GLFWwindow* window)
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // 2. Define your angle in degrees and convert to radians
-    float angleDegrees = 0.1f;
+    float angleDegrees = 50.0f;
     float angleRadians = glm::radians(angleDegrees);
 
+    // TODO: Figure out whats wrong with this.
     glEnable(GL_DEPTH_TEST);
+    glFrontFace(GL_CW);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // render loop
     // -----------
     while (running)
     {
+		Util::updateDeltaTime();
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
         // render
@@ -151,7 +160,7 @@ void render(GLFWwindow* window)
 
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-        model = glm::rotate(model, angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
+        model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
 
         glfwSwapBuffers(window);
 

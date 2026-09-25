@@ -10,5 +10,6 @@
 #include "Render/Shader.h"
 #include "Render/Camera.h"
 #include "Util/File.h"
+#include "Util/Time.h"
 
 // TODO: Reference additional headers your program requires here.

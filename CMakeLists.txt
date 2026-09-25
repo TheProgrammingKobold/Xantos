@@ -22,7 +22,8 @@ add_executable (Xantos
 "src/Render/EBO.cpp"
 "src/Render/Shader.cpp"
 "src/Render/Camera.cpp"
-"src/Util/File.cpp")
+"src/Util/File.cpp"
+"src/Util/Time.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Xantos PROPERTY CXX_STANDARD 20)
