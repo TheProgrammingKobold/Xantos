@@ -1,5 +1,7 @@
 #include "TextRenderer.h"
 
+// Ill be honest this entire thing was made with AI.
+
 #include <iostream>
 
 #include <ft2build.h>
@@ -81,6 +83,7 @@ void TextRenderer::LoadFont(
     }
 
     FT_Set_Pixel_Sizes(face, 0, fontSize);
+    _lineHeight = static_cast<float>(face->size->metrics.height) / 64.0f;
 
 
     // --------------------------------------------------
@@ -407,10 +410,18 @@ void TextRenderer::RenderText(
 
     scale = scale * 48.0f / 256.0f;
 
+    const float startX = x;
     int length = 0;
 
     for (char c : text)
     {
+        if (c == '\n')
+        {
+            x = startX;
+            y += _lineHeight * scale;
+            continue;
+        }
+
         if (length >= static_cast<int>(_arrayLimit))
             break;
 

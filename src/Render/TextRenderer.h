@@ -68,6 +68,7 @@ private:
     GLuint _textureArray = 0;
     glm::ivec2 _atlasSize = glm::ivec2(0);
     glm::ivec2 _viewportSize = glm::ivec2(0);
+    float _lineHeight = 0.0f;
 
     VAO _VAO;
     VBO _VBO;

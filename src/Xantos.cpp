@@ -6,9 +6,6 @@
 #include <atomic>
 #include <thread>
 
-// TODO: Add text rendering. https://github.com/johnWRS/LearnOpenGLTextRenderingImprovement
-// Add thread safe event system. 
-
 EventBus events;
 
 std::atomic<bool> running = true;
@@ -211,11 +208,19 @@ void render(GLFWwindow* window)
         glDisable(GL_CULL_FACE);
 
         textRenderer.RenderTextRelative(
-            "I love penis in my asshole :3",
+            "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
             0.02f,
             0.5f,
             0.05f,
             glm::vec3(1.0f)
+        );
+
+        textRenderer.RenderTextRelative(
+            "Finally... red text...",
+            0.02f,
+            0.2f,
+            0.05f,
+            glm::vec3(1.0f, 0.0f, 0.0f)
         );
 
         glEnable(GL_DEPTH_TEST);
