@@ -10,6 +10,9 @@
 #include "Render/Shader.h"
 #include "Render/Camera.h"
 #include "Render/Texture.h"
+#include "Render/TextRenderer.h"
+#include "Events/EventTypes.h"
+#include "Events/EventBus.h"
 #include "Util/File.h"
 #include "Util/Time.h"
 

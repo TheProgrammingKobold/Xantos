@@ -23,6 +23,8 @@ add_executable (Xantos
 "src/Render/Shader.cpp"
 "src/Render/Camera.cpp"
 "src/Render/Texture.cpp"
+"src/Render/TextRenderer.cpp"
+"src/Events/EventBus.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"
 "src/Util/File.cpp")
@@ -38,10 +40,12 @@ target_include_directories(Xantos PRIVATE
 "Libs/GLFW"
 "Libs/GLM"
 "Libs/STB"
+"Libs/FreeType/include"
 )
 
 target_link_libraries(Xantos PRIVATE 
 "${CMAKE_CURRENT_SOURCE_DIR}/Libs/GLFW/glfw3.lib"
+"${CMAKE_CURRENT_SOURCE_DIR}/Libs/FreeType/lib/freetype.lib"
 )
 
 add_custom_command(TARGET Xantos POST_BUILD

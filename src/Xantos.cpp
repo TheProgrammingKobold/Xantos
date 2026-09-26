@@ -9,14 +9,31 @@
 // TODO: Add text rendering. https://github.com/johnWRS/LearnOpenGLTextRenderingImprovement
 // Add thread safe event system. 
 
+EventBus events;
+
 std::atomic<bool> running = true;
 std::atomic<int> SCR_WIDTH = 800;
 std::atomic<int> SCR_HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    SCR_WIDTH = width;
-    SCR_HEIGHT = height;
+    events.Post<WindowResizeEvent>(width, height);
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
+{
+    if (action == GLFW_PRESS)
+    {
+        events.Post<KeyPressedEvent>(key, scancode, mods);
+    }
+    else if (action == GLFW_REPEAT)
+    {
+        events.Post<KeyRepeatEvent>(key, scancode, mods);
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        events.Post<KeyReleasedEvent>(key, scancode, mods);
+    }
 }
 
 void render(GLFWwindow* window)
@@ -121,7 +138,15 @@ void render(GLFWwindow* window)
     glm::mat4 model = glm::mat4(1.0f);
 
     Camera camera(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
-    camera.updateMatrix(90.0f, 0.1f, 100.0f);
+
+    TextRenderer textRenderer(
+        "Assets/Fonts/SpaceMono-Regular.ttf",
+        256,
+        400
+    ); 
+
+    textRenderer.SetProjection(camera.getOrthoProjection());
+    textRenderer.SetViewportSize(SCR_WIDTH, SCR_HEIGHT);
 
     TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
     Texture ratButtTexture(ratButtInfo);
@@ -135,32 +160,46 @@ void render(GLFWwindow* window)
     float angleRadians = glm::radians(angleDegrees);
 
     // TODO: Figure out whats wrong with this.
+    // I figured out what was wrong wtih it =3
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    events.Subscribe<WindowResizeEvent>([&](const WindowResizeEvent& event)
+        {
+            SCR_WIDTH = event.width;
+            SCR_HEIGHT = event.height;
+            glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+            camera.setWidthHeight(SCR_WIDTH, SCR_HEIGHT);
+
+            textRenderer.SetProjection(camera.getOrthoProjection());
+            textRenderer.SetViewportSize(SCR_WIDTH, SCR_HEIGHT);
+        });
 
     // render loop
     // -----------
     while (running)
     {
+        events.Dispatch();
+
 		Util::updateDeltaTime();
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
         // render
         // ------
         glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+
         ratButtTexture.bind();
         // draw our first triangle
         shader.activate();
         vao.bind();
 
-        camera.setWidthHeight(SCR_WIDTH, SCR_HEIGHT);
-        camera.matrix(shader, "camMatrix");
+        shader.setMatrix(camera.getMatrix(), "camMatrix");
         shader.setMatrix(model, "model");
         ratButtTexture.texUnit(shader, "tex", 0);
 
@@ -168,7 +207,21 @@ void render(GLFWwindow* window)
 
         model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
 
-        glfwSwapBuffers(window);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        textRenderer.RenderTextRelative(
+            "I love penis in my asshole :3",
+            0.02f,
+            0.5f,
+            0.05f,
+            glm::vec3(1.0f)
+        );
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+
+        glfwSwapBuffers(window); 
 
 
     }
@@ -194,16 +247,18 @@ int main()
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
+        glfwTerminate();  
         return -1;
     }
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     std::thread renderThread(render, window);
-
+     
     while (running)
     {
         glfwPollEvents();
+
 
         if (glfwWindowShouldClose(window))
         {

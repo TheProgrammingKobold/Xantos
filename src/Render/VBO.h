@@ -14,15 +14,16 @@ class VBO
 {
 public:
 
-	VBO(std::vector<Vertex>& vertices);
+    VBO(std::vector<Vertex>& vertices);
+    VBO(const std::vector<float>& vertices);
 
-	void bind();
-	void unbind();
-	void deleteObject() const;
+    void bind();
+    void unbind();
+    void deleteObject() const;
 
-	const inline GLuint getID() const { return _ID; }
+    const GLuint getID() const { return _ID; }
 
 private:
 
-	GLuint _ID;
+    GLuint _ID;
 };

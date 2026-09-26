@@ -1,45 +1,58 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/vector_angle.hpp>
+
 #include "Shader.h"
+
+enum class ProjectionType
+{
+    Perspective,
+    Orthographic
+};
 
 class Camera
 {
 public:
 
+    Camera(
+        int width,
+        int height,
+        const glm::vec3& position
+    );
 
-	Camera(int width, int height, glm::vec3 position);
+    void updateMatrix();
 
+    void setPosition(const glm::vec3& position);
+    void setOrientation(const glm::vec3& orientation);
 
-	void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
-	void updateMatrix();
-	void matrix(Shader& shader, const char* uniform);
+    void setWidth(int width);
+    void setHeight(int height);
+    void setWidthHeight(int width, int height);
 
-	inline void setWidth(int width) { _width = width; updateMatrix(); }
-	inline void setHeight(int height) { _height = height; updateMatrix(); }
-	inline void setWidthHeight(int width, int height) { _width = width; _height = height; updateMatrix(); }
+    const glm::vec3& getPosition() const;
+    const glm::vec3& getOrientation() const;
 
-
-	// Getters
-	inline const glm::vec3 getPosition() const { return _Position; }
+    const glm::mat4& getViewMatrix() const;
+    const glm::mat4& getPerspectiveProjection() const;
+    const glm::mat4& getOrthoProjection() const;
+    const glm::mat4& getMatrix() const;
 
 private:
 
-	int _width, _height;
+    int _width;
+    int _height;
 
-	// Stores the main vectors of the camera
-	glm::vec3 _Position;
-	glm::vec3 _Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 _Up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 _Position;
+    glm::vec3 _Orientation = { 0.0f, 0.0f, -1.0f };
+    glm::vec3 _Up = { 0.0f, 1.0f, 0.0f };
 
-	glm::mat4 _cameraMatrix = glm::mat4(1.0f);
+    glm::mat4 _viewMatrix = glm::mat4(1.0f);
+    glm::mat4 _perspectiveProjection = glm::mat4(1.0f);
+    glm::mat4 _orthoProjection = glm::mat4(1.0f);
+    glm::mat4 _cameraMatrix = glm::mat4(1.0f);
 
-	float _FOVdegree = 90.0f, _nearPlane = 0.1f, _farPlane = 100.0f;
-
+    float _FOVdegree = 90.0f;
+    float _nearPlane = 0.1f;
+    float _farPlane = 100.0f;
 };
