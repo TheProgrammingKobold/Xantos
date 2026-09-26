@@ -9,6 +9,7 @@
 #include "Render/EBO.h"
 #include "Render/Shader.h"
 #include "Render/Camera.h"
+#include "Render/Texture.h"
 #include "Util/File.h"
 #include "Util/Time.h"
 

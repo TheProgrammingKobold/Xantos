@@ -40,4 +40,6 @@ private:
 
 	glm::mat4 _cameraMatrix = glm::mat4(1.0f);
 
+	float _FOVdegree = 90.0f, _nearPlane = 0.1f, _farPlane = 100.0f;
+
 };

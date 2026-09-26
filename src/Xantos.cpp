@@ -78,29 +78,29 @@ void render(GLFWwindow* window)
 
     std::vector<GLuint> indices =
     {
-        // Front face
-        0, 1, 2, // Leftish triangle
-        1, 3, 2, // Rightish triangle
+        // Front
+        0, 2, 1,
+        1, 2, 3,
 
-        // Back face
+        // Back
         4, 5, 6,
         5, 7, 6,
 
-        // Top face
-        8, 9, 10,
-        9, 11, 10,
+        // Top
+        8, 10, 9,
+        9, 10, 11,
 
-        // Bottom face
-        12, 13, 14,
-        13, 15, 14,
+        // Bottom
+        12, 14, 13,
+        13, 14, 15,
 
-        // Left face
-        16, 17, 18,
-        17, 19, 18,
+        // Left
+        16, 18, 17,
+        17, 18, 19,
 
-        // Right face
-        20, 21, 22,
-        21, 23, 22
+        // Right
+        20, 22, 21,
+        21, 22, 23
     };
 
     VAO vao;
@@ -123,6 +123,9 @@ void render(GLFWwindow* window)
     Camera camera(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
     camera.updateMatrix(90.0f, 0.1f, 100.0f);
 
+    TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
+    Texture ratButtTexture(ratButtInfo);
+
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -133,10 +136,11 @@ void render(GLFWwindow* window)
 
     // TODO: Figure out whats wrong with this.
     glEnable(GL_DEPTH_TEST);
-    glFrontFace(GL_CW);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glCullFace(GL_BACK);
+
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // render loop
     // -----------
@@ -150,6 +154,7 @@ void render(GLFWwindow* window)
         glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ratButtTexture.bind();
         // draw our first triangle
         shader.activate();
         vao.bind();
@@ -157,6 +162,7 @@ void render(GLFWwindow* window)
         camera.setWidthHeight(SCR_WIDTH, SCR_HEIGHT);
         camera.matrix(shader, "camMatrix");
         shader.setMatrix(model, "model");
+        ratButtTexture.texUnit(shader, "tex", 0);
 
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
