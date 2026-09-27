@@ -1,14 +1,14 @@
 #include "Renderer.h"
 
 #include "../Core/Window.h"
-
-
+#include "Camera.h"
 
 #include <stdexcept>
 #include <utility>
 
-Renderer::Renderer(Window& window)
-    : _window(window)
+Renderer::Renderer(Window& window, Camera& camera)
+    : _window(window),
+      _camera(camera)
 {
     GLFWwindow* nativeWindow =
         _window.GetNativeWindow();
@@ -43,6 +43,10 @@ Renderer::Renderer(Window& window)
         _window.GetWidth(),
         _window.GetHeight()
     );
+
+    _textRenderer = std::make_unique<TextRenderer>("Assets/Fonts/SpaceMono-Regular.ttf", 256, 400);
+    _textRenderer->SetProjection(_camera.getOrthoProjection());
+    _textRenderer->SetViewportSize(_window.GetWidth(), _window.GetHeight());
 }
 
 void Renderer::BeginFrame()
@@ -62,12 +66,48 @@ void Renderer::BeginFrame()
 
 void Renderer::ExecuteCommands()
 {
-    for (auto& command : _commands)
+    Render3D();
+    RenderText();
+}
+
+void Renderer::Render3D()
+{
+    for (const auto& command : _drawCommands)
     {
-        command();
+        command.material->Bind();
+
+        auto& shader = command.material->GetShader();
+
+        shader.setMatrix(_camera.getMatrix(), "camMatrix");
+        shader.setMatrix(command.transform, "model");
+
+
+        command.mesh->Draw();
     }
 
-    _commands.clear();
+    _drawCommands.clear();
+}
+
+void Renderer::RenderText()
+{
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    for (const auto& command : _textCommands)
+    {
+        _textRenderer->RenderText(
+            command.text,
+            command.position.x,
+            command.position.y,
+            command.scale,
+            command.color
+        );
+    }
+
+    _textCommands.clear();
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
 
 void Renderer::EndFrame()
@@ -75,7 +115,21 @@ void Renderer::EndFrame()
     _window.SwapBuffers();
 }
 
-void Renderer::Submit(std::function<void()> command)
+void Renderer::Resize(int width, int height)
 {
-    _commands.push_back(std::move(command));
+    glViewport(0, 0, width, height);
+    _camera.setWidthHeight(width, height);
+
+    _textRenderer->SetProjection(_camera.getOrthoProjection());
+    _textRenderer->SetViewportSize(width, height);
+}
+
+void Renderer::Submit(const DrawCommand& command)
+{
+    _drawCommands.push_back(std::move(command));
+}
+
+void Renderer::Submit(const TextCommand& command)
+{
+    _textCommands.push_back(std::move(command));
 }

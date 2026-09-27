@@ -12,9 +12,7 @@ std::atomic<bool> running = true;
 
 void render(Window& window)
 {
-    Renderer renderer(window);
 
-    auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -86,20 +84,17 @@ void render(Window& window)
         21, 22, 23
     };
 
-    Mesh cube(vertices, indices);
+    // VERY IMPORTNAT!! CAMERA AND RENDERER MUST BE CALLED FIRST BEFORE ANY MESH IS CREATED (duh)
+    Camera camera(window.GetWidth(), window.GetHeight(), glm::vec3(0.0f, 0.0f, 2.0f));
+
+    Renderer renderer(window, camera);
+
+    auto cube = std::make_shared<Mesh>(vertices, indices);
 
     glm::mat4 model = glm::mat4(1.0f);
 
-    Camera camera(window.GetWidth(), window.GetHeight(), glm::vec3(0.0f, 0.0f, 2.0f));
+    auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
-    TextRenderer textRenderer(
-        "Assets/Fonts/SpaceMono-Regular.ttf",
-        256,
-        400
-    ); 
-
-    textRenderer.SetProjection(camera.getOrthoProjection());
-    textRenderer.SetViewportSize(window.GetWidth(), window.GetHeight());
 
     TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
     auto ratButtTexture = std::make_shared<Texture>(ratButtInfo);
@@ -116,11 +111,7 @@ void render(Window& window)
 
     events.Subscribe<WindowResizeEvent>([&](const WindowResizeEvent& event)
         {
-            glViewport(0, 0, event.width, event.height);
-            camera.setWidthHeight(event.width, event.height);
-
-            textRenderer.SetProjection(camera.getOrthoProjection());
-            textRenderer.SetViewportSize(event.width, event.height);
+            renderer.Resize(event.width, event.height);
         });
 
     // render loop
@@ -133,46 +124,23 @@ void render(Window& window)
 
         renderer.BeginFrame();
 
-        renderer.Submit([&]()
-            {
-                ratCubeMaterial->Bind();
-                cube.Bind();
-
-                ratCubeMaterial->GetShader().setMatrix(camera.getMatrix(), "camMatrix");
-                ratCubeMaterial->GetShader().setMatrix(model, "model");
-
-                //ratButtTexture.texUnit(shader, "tex", 0);
-
-                cube.Draw();
-
-                model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
+        renderer.Submit({
+            cube,
+            ratCubeMaterial,
+            model
             });
 
-        renderer.Submit([&]()
+        model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
+
+        
+        renderer.Submit(
             {
-                glDisable(GL_DEPTH_TEST);
-                glDisable(GL_CULL_FACE);
-
-                textRenderer.RenderTextRelative(
-                    "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
-                    0.02f,
-                    0.5f,
-                    0.05f,
-                    glm::vec3(1.0f)
-                );
-
-                textRenderer.RenderTextRelative(
-                    "This will be cool =3",
-                    0.02f,
-                    0.2f,
-                    0.05f,
-                    glm::vec3(1.0f, 0.0f, 1.0f)
-                );
-
-                glEnable(GL_DEPTH_TEST);
-                glEnable(GL_CULL_FACE);
+                "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
+                {20.0f, 30.0f},
+                1.0f,
+                glm::vec3(1.0f)
             });
-
+        
 
         renderer.ExecuteCommands();
 
