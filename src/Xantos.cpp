@@ -12,8 +12,6 @@ std::atomic<bool> running = true;
 
 void render(Window& window)
 {
-
-
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     std::vector<Vertex> vertices =
@@ -91,7 +89,7 @@ void render(Window& window)
 
     auto cube = std::make_shared<Mesh>(vertices, indices);
 
-    glm::mat4 model = glm::mat4(1.0f);
+    Transform transform;
 
     auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
@@ -100,6 +98,12 @@ void render(Window& window)
     auto ratButtTexture = std::make_shared<Texture>(ratButtInfo);
 
     auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
+
+    Scene scene;
+    Entity& ratCube = scene.CreateEntity();
+    ratCube.mesh = cube;
+    ratCube.material = ratCubeMaterial;
+    ratCube.transform = transform;
 
 
     // uncomment this call to draw in wireframe polygons.
@@ -124,13 +128,8 @@ void render(Window& window)
 
         renderer.BeginFrame();
 
-        renderer.Submit({
-            cube,
-            ratCubeMaterial,
-            model
-            });
-
-        model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
+        scene.Render(renderer);
+        scene.Update(Util::getDeltaTime());
 
         
         renderer.Submit(

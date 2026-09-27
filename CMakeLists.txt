@@ -29,6 +29,7 @@ add_executable (Xantos
 "src/Render/Material.cpp"
 "src/Events/EventBus.cpp"
 "src/Core/Window.cpp"
+"src/Core/Scene.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"
 "src/Util/File.cpp")

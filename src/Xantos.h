@@ -14,6 +14,7 @@
 #include "Render/Renderer.h"
 #include "Render/Mesh.h"
 #include "Render/Material.h"
+#include "Core/Scene.h"
 #include "Core/Window.h"
 #include "Events/EventTypes.h"
 #include "Events/EventBus.h"
