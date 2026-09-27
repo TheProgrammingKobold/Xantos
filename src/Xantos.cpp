@@ -9,33 +9,11 @@
 EventBus events;
 
 std::atomic<bool> running = true;
-std::atomic<int> SCR_WIDTH = 800;
-std::atomic<int> SCR_HEIGHT = 600;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void render(Window& window)
 {
-    events.Post<WindowResizeEvent>(width, height);
-}
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
-{
-    if (action == GLFW_PRESS)
-    {
-        events.Post<KeyPressedEvent>(key, scancode, mods);
-    }
-    else if (action == GLFW_REPEAT)
-    {
-        events.Post<KeyRepeatEvent>(key, scancode, mods);
-    }
-    else if (action == GLFW_RELEASE)
-    {
-        events.Post<KeyReleasedEvent>(key, scancode, mods);
-    }
-}
-
-void render(GLFWwindow* window)
-{
-    glfwMakeContextCurrent(window);
+    GLFWwindow* nativeWindow = window.GetNativeWindow();
+    glfwMakeContextCurrent(nativeWindow);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -134,7 +112,7 @@ void render(GLFWwindow* window)
 
     glm::mat4 model = glm::mat4(1.0f);
 
-    Camera camera(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
+    Camera camera(window.GetWidth(), window.GetHeight(), glm::vec3(0.0f, 0.0f, 2.0f));
 
     TextRenderer textRenderer(
         "Assets/Fonts/SpaceMono-Regular.ttf",
@@ -143,7 +121,7 @@ void render(GLFWwindow* window)
     ); 
 
     textRenderer.SetProjection(camera.getOrthoProjection());
-    textRenderer.SetViewportSize(SCR_WIDTH, SCR_HEIGHT);
+    textRenderer.SetViewportSize(window.GetWidth(), window.GetHeight());
 
     TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
     Texture ratButtTexture(ratButtInfo);
@@ -167,13 +145,11 @@ void render(GLFWwindow* window)
 
     events.Subscribe<WindowResizeEvent>([&](const WindowResizeEvent& event)
         {
-            SCR_WIDTH = event.width;
-            SCR_HEIGHT = event.height;
-            glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-            camera.setWidthHeight(SCR_WIDTH, SCR_HEIGHT);
+            glViewport(0, 0, event.width, event.height);
+            camera.setWidthHeight(event.width, event.height);
 
             textRenderer.SetProjection(camera.getOrthoProjection());
-            textRenderer.SetViewportSize(SCR_WIDTH, SCR_HEIGHT);
+            textRenderer.SetViewportSize(event.width, event.height);
         });
 
     // render loop
@@ -216,17 +192,17 @@ void render(GLFWwindow* window)
         );
 
         textRenderer.RenderTextRelative(
-            "Finally... red text...",
+            "This will be cool =3",
             0.02f,
             0.2f,
             0.05f,
-            glm::vec3(1.0f, 0.0f, 0.0f)
+            glm::vec3(1.0f, 0.0f, 1.0f)
         );
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        glfwSwapBuffers(window); 
+        window.SwapBuffers();
 
 
     }
@@ -239,33 +215,21 @@ void render(GLFWwindow* window)
 
 int main()
 {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    Window window(
+        800,
+        600,
+        "Xantos",
+        events
+    );
 
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Xantos", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();  
-        return -1;
-    }
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetKeyCallback(window, key_callback);
-
-    std::thread renderThread(render, window);
+    std::thread renderThread(render, std::ref(window));
      
     while (running)
     {
         glfwPollEvents();
 
 
-        if (glfwWindowShouldClose(window))
+        if (window.ShouldClose())
         {
             running = false;
         }

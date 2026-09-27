@@ -57,6 +57,9 @@ class KeyRepeatEvent : public Event
 {
 public:
     KeyRepeatEvent(int key, int scancode, int mods)
+        : key(key),
+        scancode(scancode),
+        mods(mods)
     {
     }
 
