@@ -24,6 +24,7 @@ add_executable (Xantos
 "src/Render/Camera.cpp"
 "src/Render/Texture.cpp"
 "src/Render/TextRenderer.cpp"
+"src/Render/Renderer.cpp"
 "src/Events/EventBus.cpp"
 "src/Core/Window.cpp"
 "src/Util/File.cpp"

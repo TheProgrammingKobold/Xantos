@@ -12,16 +12,7 @@ std::atomic<bool> running = true;
 
 void render(Window& window)
 {
-    GLFWwindow* nativeWindow = window.GetNativeWindow();
-    glfwMakeContextCurrent(nativeWindow);
-
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return;
-    }
+    Renderer renderer(window);
 
     Shader shader("default_vertex.shader", "default_fragment.shader");
 
@@ -134,15 +125,6 @@ void render(Window& window)
     float angleDegrees = 50.0f;
     float angleRadians = glm::radians(angleDegrees);
 
-    // TODO: Figure out whats wrong with this.
-    // I figured out what was wrong wtih it =3
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     events.Subscribe<WindowResizeEvent>([&](const WindowResizeEvent& event)
         {
             glViewport(0, 0, event.width, event.height);
@@ -160,49 +142,53 @@ void render(Window& window)
 
 		Util::updateDeltaTime();
 
-        // render
-        // ------
-        glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer.BeginFrame();
+
+        renderer.Submit([&]()
+            {
+                ratButtTexture.bind();
+                // draw our first triangle
+                shader.activate();
+                vao.bind();
+
+                shader.setMatrix(camera.getMatrix(), "camMatrix");
+                shader.setMatrix(model, "model");
+                ratButtTexture.texUnit(shader, "tex", 0);
+
+                glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+
+                model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
+            });
+
+        renderer.Submit([&]()
+            {
+                glDisable(GL_DEPTH_TEST);
+                glDisable(GL_CULL_FACE);
+
+                textRenderer.RenderTextRelative(
+                    "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
+                    0.02f,
+                    0.5f,
+                    0.05f,
+                    glm::vec3(1.0f)
+                );
+
+                textRenderer.RenderTextRelative(
+                    "This will be cool =3",
+                    0.02f,
+                    0.2f,
+                    0.05f,
+                    glm::vec3(1.0f, 0.0f, 1.0f)
+                );
+
+                glEnable(GL_DEPTH_TEST);
+                glEnable(GL_CULL_FACE);
+            });
 
 
+        renderer.ExecuteCommands();
 
-        ratButtTexture.bind();
-        // draw our first triangle
-        shader.activate();
-        vao.bind();
-
-        shader.setMatrix(camera.getMatrix(), "camMatrix");
-        shader.setMatrix(model, "model");
-        ratButtTexture.texUnit(shader, "tex", 0);
-
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-
-        model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
-
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
-
-        textRenderer.RenderTextRelative(
-            "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
-            0.02f,
-            0.5f,
-            0.05f,
-            glm::vec3(1.0f)
-        );
-
-        textRenderer.RenderTextRelative(
-            "This will be cool =3",
-            0.02f,
-            0.2f,
-            0.05f,
-            glm::vec3(1.0f, 0.0f, 1.0f)
-        );
-
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-
-        window.SwapBuffers();
+        renderer.EndFrame();
 
 
     }
