@@ -14,7 +14,7 @@ void render(Window& window)
 {
     Renderer renderer(window);
 
-    Shader shader("default_vertex.shader", "default_fragment.shader");
+    auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -102,7 +102,9 @@ void render(Window& window)
     textRenderer.SetViewportSize(window.GetWidth(), window.GetHeight());
 
     TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
-    Texture ratButtTexture(ratButtInfo);
+    auto ratButtTexture = std::make_shared<Texture>(ratButtInfo);
+
+    auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
 
 
     // uncomment this call to draw in wireframe polygons.
@@ -133,14 +135,13 @@ void render(Window& window)
 
         renderer.Submit([&]()
             {
-                ratButtTexture.bind();
-                // draw our first triangle
-                shader.activate();
+                ratCubeMaterial->Bind();
                 cube.Bind();
 
-                shader.setMatrix(camera.getMatrix(), "camMatrix");
-                shader.setMatrix(model, "model");
-                ratButtTexture.texUnit(shader, "tex", 0);
+                ratCubeMaterial->GetShader().setMatrix(camera.getMatrix(), "camMatrix");
+                ratCubeMaterial->GetShader().setMatrix(model, "model");
+
+                //ratButtTexture.texUnit(shader, "tex", 0);
 
                 cube.Draw();
 
@@ -179,7 +180,6 @@ void render(Window& window)
 
 
     }
-    shader.deleteShader();
 }
 
 int main()
