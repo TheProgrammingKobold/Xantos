@@ -7,7 +7,7 @@ class EBO
 {
 public:
 
-	EBO(std::vector<GLuint>& indices);
+	EBO(const std::vector<GLuint>& indices);
 
 	void bind();
 	void unbind();

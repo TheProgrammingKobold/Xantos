@@ -1,6 +1,6 @@
 #include "EBO.h"
 
-EBO::EBO(std::vector<GLuint>& indices)
+EBO::EBO(const std::vector<GLuint>& indices)
 {
 	glGenBuffers(1, &_ID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ID);

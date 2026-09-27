@@ -12,6 +12,7 @@
 #include "Render/Texture.h"
 #include "Render/TextRenderer.h"
 #include "Render/Renderer.h"
+#include "Render/Mesh.h"
 #include "Core/Window.h"
 #include "Events/EventTypes.h"
 #include "Events/EventBus.h"

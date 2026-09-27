@@ -1,6 +1,6 @@
 #include "VBO.h"
 
-VBO::VBO(std::vector<Vertex>& vertices)
+VBO::VBO(const std::vector<Vertex>& vertices)
 {
     glGenBuffers(1, &_ID);
 

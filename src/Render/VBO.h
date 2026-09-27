@@ -14,7 +14,7 @@ class VBO
 {
 public:
 
-    VBO(std::vector<Vertex>& vertices);
+    VBO(const std::vector<Vertex>& vertices);
     VBO(const std::vector<float>& vertices);
 
     void bind();

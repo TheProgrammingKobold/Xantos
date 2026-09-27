@@ -14,12 +14,12 @@ void VAO::linkAttrib(VBO& VBO, GLuint layout, GLuint numComponents, GLenum type,
 	VBO.unbind();
 }
 
-void VAO::bind()
+void VAO::bind() const
 {
 	glBindVertexArray(_ID);
 }
 
-void VAO::unbind()
+void VAO::unbind() const
 {
 	glBindVertexArray(0);
 }

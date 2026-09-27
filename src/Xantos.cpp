@@ -86,20 +86,7 @@ void render(Window& window)
         21, 22, 23
     };
 
-    VAO vao;
-    vao.bind();
-
-    VBO vbo(vertices);
-    EBO ebo(indices);
-
-    vao.linkAttrib(vbo, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
-    vao.linkAttrib(vbo, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)(3 * sizeof(float)));
-    vao.linkAttrib(vbo, 2, 3, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
-    vao.linkAttrib(vbo, 3, 2, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
-
-
-    vbo.unbind();
-    vao.unbind();
+    Mesh cube(vertices, indices);
 
     glm::mat4 model = glm::mat4(1.0f);
 
@@ -149,13 +136,13 @@ void render(Window& window)
                 ratButtTexture.bind();
                 // draw our first triangle
                 shader.activate();
-                vao.bind();
+                cube.Bind();
 
                 shader.setMatrix(camera.getMatrix(), "camMatrix");
                 shader.setMatrix(model, "model");
                 ratButtTexture.texUnit(shader, "tex", 0);
 
-                glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+                cube.Draw();
 
                 model = glm::rotate(model, Util::getDeltaTime() * angleRadians, glm::vec3(0.3f, 1.0f, 0.5f));
             });
@@ -192,10 +179,6 @@ void render(Window& window)
 
 
     }
-
-    vao.deleteObject();
-    vbo.deleteObject();
-    ebo.deleteObject();
     shader.deleteShader();
 }
 
