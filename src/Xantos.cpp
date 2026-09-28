@@ -136,10 +136,31 @@ void render(Window& window)
             renderer.Resize(event.width, event.height);
         });
 
+    // 1. Initialize variables before the render loop
+    double lastTime = glfwGetTime();
+    int frameCount = 0;
+    std::string fpsText = "FPS: 0\n0.00 ms/frame"; // Holds the text between updates
+
     // render loop
     // -----------
     while (running)
     {
+        // 2. Count frames and check if 1 second has elapsed
+        double currentTime = glfwGetTime();
+        frameCount++;
+
+        if (currentTime - lastTime >= 1.0)
+        {
+            double msPerFrame = 1000.0 / double(frameCount);
+            int fps = frameCount;
+
+            // Update our cached string representation
+            fpsText = "FPS: " + std::to_string(fps) + "\n" + std::to_string(msPerFrame) + " ms/frame";
+
+            frameCount = 0;
+            lastTime += 1.0;
+        }
+
         // Handles events.
         events.Dispatch();
 
@@ -158,7 +179,7 @@ void render(Window& window)
         
         renderer.Submit(
             {
-                "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
+                fpsText,
                 {20.0f, 30.0f},
                 0.5f,
                 glm::vec3(1.0f)
