@@ -28,17 +28,17 @@ VBO::VBO(const std::vector<float>& vertices)
     );
 }
 
-void VBO::bind()
+void VBO::Bind()
 {
     glBindBuffer(GL_ARRAY_BUFFER, _ID);
 }
 
-void VBO::unbind()
+void VBO::Unbind()
 {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void VBO::deleteObject() const
+void VBO::DeleteObject() const
 {
     glDeleteBuffers(1, &_ID);
 }

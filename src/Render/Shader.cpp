@@ -5,8 +5,8 @@
 Shader::Shader(std::string filePathToVertex, std::string filePathToFragment)
 {
 	// Reading the shaders from the file
-	std::string vertexString = _parseFileToString("Shaders/" + filePathToVertex);
-	std::string fragmentString = _parseFileToString("Shaders/" + filePathToFragment);
+	std::string vertexString = ParseFileToString("Shaders/" + filePathToVertex);
+	std::string fragmentString = ParseFileToString("Shaders/" + filePathToFragment);
 
 	if (vertexString == "ERROR" || fragmentString == "ERROR")
 	{
@@ -25,7 +25,7 @@ Shader::Shader(std::string filePathToVertex, std::string filePathToFragment)
 	// Compiles the shader into machine code
 	glCompileShader(vertexShader);
 	// Validates the shader
-	_validateShader(vertexShader);
+	ValidateShader(vertexShader);
 
 
 	// Creates ID for fragment shader
@@ -35,7 +35,7 @@ Shader::Shader(std::string filePathToVertex, std::string filePathToFragment)
 	// Compiling the shader into machine code
 	glCompileShader(fragmentShader);
 	// Validates the shader
-	_validateShader(fragmentShader);
+	ValidateShader(fragmentShader);
 
 
 	// Creates a shader program and the ID to it
@@ -64,42 +64,42 @@ Shader::Shader(std::string filePathToVertex, std::string filePathToFragment)
 
 }
 
-void Shader::activate()
+void Shader::Activate()
 {
 	glUseProgram(_ID);
 }
 
-void Shader::deleteShader()
+void Shader::DeleteShader()
 {
 	glDeleteProgram(_ID);
 }
 
-const void Shader::setMatrix(const glm::mat4& matrix, const std::string& uniform) const
+const void Shader::SetMatrix(const glm::mat4& matrix, const std::string& uniform) const
 {
-	glUniformMatrix4fv(getUniform(uniform), 1, GL_FALSE, glm::value_ptr(matrix));
+	glUniformMatrix4fv(GetUniform(uniform), 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
-const void Shader::setVec3(const glm::vec3& vec, const std::string& uniform) const
+const void Shader::SetVec3(const glm::vec3& vec, const std::string& uniform) const
 {
-	glUniform3fv(getUniform(uniform), 1, glm::value_ptr(vec));
+	glUniform3fv(GetUniform(uniform), 1, glm::value_ptr(vec));
 }
 
-const void Shader::setInt(int value, const std::string& uniform) const
+const void Shader::SetInt(int value, const std::string& uniform) const
 {
-	glUniform1i(getUniform(uniform), value);
+	glUniform1i(GetUniform(uniform), value);
 }
 
-const void Shader::setFloat(float value, const std::string& uniform) const
+const void Shader::SetFloat(float value, const std::string& uniform) const
 {
-	glUniform1f(getUniform(uniform), value);
+	glUniform1f(GetUniform(uniform), value);
 }
 
-const void Shader::setFloatArray(const std::vector<GLfloat>& data, const std::string& uniform) const
+const void Shader::SetFloatArray(const std::vector<GLfloat>& data, const std::string& uniform) const
 {
-	glUniform1fv(getUniform(uniform), data.size(), data.data());
+	glUniform1fv(GetUniform(uniform), data.size(), data.data());
 }
 
-std::string Shader::_parseFileToString(std::string filepath)
+std::string Shader::ParseFileToString(std::string filepath)
 {
 	// Setting the result
 	std::string result;
@@ -136,7 +136,7 @@ std::string Shader::_parseFileToString(std::string filepath)
 	return result;
 }
 
-void Shader::_validateShader(GLuint shader)
+void Shader::ValidateShader(GLuint shader)
 {
 	int status;
 	char infoLog[512];

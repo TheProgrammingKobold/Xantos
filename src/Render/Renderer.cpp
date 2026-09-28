@@ -45,8 +45,22 @@ Renderer::Renderer(Window& window, Camera& camera)
     );
 
     _textRenderer = std::make_unique<TextRenderer>("Assets/Fonts/SpaceMono-Regular.ttf", 256, 400);
-    _textRenderer->SetProjection(_camera.getOrthoProjection());
+    _textRenderer->SetProjection(_camera.GetOrthoProjection());
     _textRenderer->SetViewportSize(_window.GetWidth(), _window.GetHeight());
+    _skyboxRenderer =
+        std::make_unique<SkyboxRenderer>();
+
+	std::array<std::string, 6> faces =
+	{
+		"Assets/Textures/Cubemap/bkg1_right.png",
+		"Assets/Textures/Cubemap/bkg1_left.png",
+		"Assets/Textures/Cubemap/bkg1_top.png",
+		"Assets/Textures/Cubemap/bkg1_bot.png",
+		"Assets/Textures/Cubemap/bkg1_front.png",
+		"Assets/Textures/Cubemap/bkg1_back.png"
+	};
+
+    _skybox = std::make_unique<Cubemap>(faces);
 }
 
 void Renderer::BeginFrame()
@@ -66,6 +80,7 @@ void Renderer::BeginFrame()
 
 void Renderer::ExecuteCommands()
 {
+    RenderSkybox();
     Render3D();
     RenderText();
 }
@@ -78,8 +93,8 @@ void Renderer::Render3D()
 
         auto& shader = command.material->GetShader();
 
-        shader.setMatrix(_camera.getMatrix(), "camMatrix");
-        shader.setMatrix(command.transform, "model");
+        shader.SetMatrix(_camera.GetMatrix(), "camMatrix");
+        shader.SetMatrix(command.transform, "model");
 
 
         command.mesh->Draw();
@@ -110,6 +125,16 @@ void Renderer::RenderText()
     glEnable(GL_CULL_FACE);
 }
 
+void Renderer::RenderSkybox()
+{
+    glDisable(GL_CULL_FACE);
+    _skyboxRenderer->Render(
+        _camera,
+        *_skybox
+    );
+    glEnable(GL_CULL_FACE);
+}
+
 void Renderer::EndFrame()
 {
     _window.SwapBuffers();
@@ -118,9 +143,9 @@ void Renderer::EndFrame()
 void Renderer::Resize(int width, int height)
 {
     glViewport(0, 0, width, height);
-    _camera.setWidthHeight(width, height);
+    _camera.SetWidthHeight(width, height);
 
-    _textRenderer->SetProjection(_camera.getOrthoProjection());
+    _textRenderer->SetProjection(_camera.GetOrthoProjection());
     _textRenderer->SetViewportSize(width, height);
 }
 

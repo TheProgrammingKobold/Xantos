@@ -10,7 +10,7 @@ EventBus events;
 
 std::atomic<bool> running = true;
 
-void render(Window& window)
+void Render(Window& window)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -164,16 +164,16 @@ void render(Window& window)
         // Handles events.
         events.Dispatch();
 
-		Util::updateDeltaTime();
+        Util::UpdateDeltaTime();
 
         renderer.BeginFrame();
         
         // For player and camera compatibility
         player.SetOrientation(camera.GetForward());
 
-        scene.Update(Util::getDeltaTime());
+        scene.Update(Util::GetDeltaTime());
 
-        camera.setPosition(player.transform.position);
+        camera.SetPosition(player.transform.position);
         camera.Rotate(player.GetYaw(), player.GetPitch());
 
         
@@ -205,7 +205,7 @@ int main()
         events
     );
 
-    std::thread renderThread(render, std::ref(window));
+    std::thread renderThread(Render, std::ref(window));
      
     while (running)
     {

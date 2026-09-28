@@ -10,12 +10,12 @@ Mesh::Mesh(
         static_cast<GLsizei>(indices.size())
     )
 {
-    _vao.bind();
+    _vao.Bind();
 
-    _vbo.bind();
-    _ebo.bind();
+    _vbo.Bind();
+    _ebo.Bind();
 
-    _vao.linkAttrib(
+    _vao.LinkAttrib(
         _vbo,
         0,
         3,
@@ -24,7 +24,7 @@ Mesh::Mesh(
         (void*)0
     );
 
-    _vao.linkAttrib(
+    _vao.LinkAttrib(
         _vbo,
         1,
         3,
@@ -33,7 +33,7 @@ Mesh::Mesh(
         (void*)(3 * sizeof(float))
     );
 
-    _vao.linkAttrib(
+    _vao.LinkAttrib(
         _vbo,
         2,
         3,
@@ -42,7 +42,7 @@ Mesh::Mesh(
         (void*)(6 * sizeof(float))
     );
 
-    _vao.linkAttrib(
+    _vao.LinkAttrib(
         _vbo,
         3,
         2,
@@ -51,24 +51,24 @@ Mesh::Mesh(
         (void*)(9 * sizeof(float))
     );
 
-    _vao.unbind();
-    _vbo.unbind();
-    _ebo.unbind();
+    _vao.Unbind();
+    _vbo.Unbind();
+    _ebo.Unbind();
 }
 
 void Mesh::Bind() const
 {
-    _vao.bind();
+    _vao.Bind();
 }
 
 void Mesh::Unbind() const
 {
-    _vao.unbind();
+    _vao.Unbind();
 }
 
 void Mesh::Draw() const
 {
-    _vao.bind();
+    _vao.Bind();
 
     glDrawElements(
         GL_TRIANGLES,

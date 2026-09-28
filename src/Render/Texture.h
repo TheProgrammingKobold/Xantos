@@ -32,17 +32,17 @@ public:
 	Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, std::string fileName);
 	Texture(TextureInfo info);
 
-	const void updateTexture(GLenum format, GLenum pixelType, int width, int height, const void* data) const;
+	const void UpdateTexture(GLenum format, GLenum pixelType, int width, int height, const void* data) const;
 
-	const void texUnit(Shader& shader, const char* uniform, GLuint unit) const;
+	const void TexUnit(Shader& shader, const char* uniform, GLuint unit) const;
 
-	void setActiveTexture() const;
+	void SetActiveTexture() const;
 
-	const void bind() const;
+	const void Bind() const;
 
-	const void unbind() const;
+	const void Unbind() const;
 
-	inline const GLuint getID() const { return ID; };
+	inline const GLuint GetID() const { return ID; };
 
 private:
 

@@ -8,10 +8,10 @@ public:
 
 	VAO();
 
-	void linkAttrib(VBO& VBO, GLuint layout, GLuint numComponents, GLenum type, GLsizeiptr stride, void* offset);
-	void bind() const;
-	void unbind() const;
-	void deleteObject() const;
+	void LinkAttrib(VBO& VBO, GLuint layout, GLuint numComponents, GLenum type, GLsizeiptr stride, void* offset);
+	void Bind() const;
+	void Unbind() const;
+	void DeleteObject() const;
 
 private:
 

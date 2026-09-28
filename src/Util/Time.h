@@ -4,6 +4,6 @@
 
 namespace Util
 {
-	float getDeltaTime();
-	void updateDeltaTime();
+	float GetDeltaTime();
+	void UpdateDeltaTime();
 }

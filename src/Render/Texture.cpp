@@ -18,12 +18,12 @@ Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, s
 
 	stbi_set_flip_vertically_on_load(true);
 
-	std::string filePath = Util::rootFilePath() + "\\Assets\\Textures\\" + fileName;
+	std::string filePath = Util::RootFilePath() + "\\Assets\\Textures\\" + fileName;
 
 	if (!std::filesystem::is_directory(filePath) && !std::filesystem::exists(filePath))
 	{
 		std::cerr << "ERROR: Couldn't load file at path '" << filePath << "'\n";
-		filePath = Util::rootFilePath() + "extern/Textures/Default.png";
+		filePath = Util::RootFilePath() + "extern/Textures/Default.png";
 	}
 
 	uint8_t* imageBytes = stbi_load(filePath.c_str(), &width, &height, &numColCh, 0);
@@ -35,7 +35,7 @@ Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, s
 
 	glGenTextures(1, &ID);
 
-	bind();
+	Bind();
 
 	glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -47,7 +47,7 @@ Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, s
 
 	stbi_image_free(imageBytes);
 
-	unbind();
+	Unbind();
 }
 
 // Constructor delegation ensures the base constructor initializes members, avoiding temporary objects.
@@ -56,31 +56,31 @@ Texture::Texture(TextureInfo info)
 {
 }
 
-const void Texture::updateTexture(GLenum format, GLenum pixelType, int width, int height, const void* data) const
+const void Texture::UpdateTexture(GLenum format, GLenum pixelType, int width, int height, const void* data) const
 {
-	bind();
+	Bind();
 	glTexImage2D(type, 0, GL_RGBA, width, height, 0, format, pixelType, data);
 	glGenerateMipmap(type);
-	unbind();
+	Unbind();
 }
 
-const void Texture::texUnit(Shader& shader, const char* uniform, GLuint unit) const
+const void Texture::TexUnit(Shader& shader, const char* uniform, GLuint unit) const
 {
-	shader.activate();
-	glUniform1i(glGetUniformLocation(shader.getID(), uniform), unit);
+	shader.Activate();
+	glUniform1i(glGetUniformLocation(shader.GetID(), uniform), unit);
 }
 
-void Texture::setActiveTexture() const
+void Texture::SetActiveTexture() const
 {
 	glActiveTexture(m_slot);
 }
 
-const void Texture::bind() const
+const void Texture::Bind() const
 {
 	glBindTexture(type, ID);
 }
 
-const void Texture::unbind() const
+const void Texture::Unbind() const
 {
 	glBindTexture(type, 0);
 }

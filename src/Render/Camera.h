@@ -21,26 +21,26 @@ public:
         const glm::vec3& position
     );
 
-    void updateMatrix();
+    void UpdateMatrix();
 
     void Rotate(float yaw, float pitch);
     glm::vec3 GetForward() const;
     glm::vec3 GetRight() const;
 
-    void setPosition(const glm::vec3& position);
-    void setOrientation(const glm::vec3& orientation);
+    void SetPosition(const glm::vec3& position);
+    void SetOrientation(const glm::vec3& orientation);
 
-    void setWidth(int width);
-    void setHeight(int height);
-    void setWidthHeight(int width, int height);
+    void SetWidth(int width);
+    void SetHeight(int height);
+    void SetWidthHeight(int width, int height);
 
-    const glm::vec3& getPosition() const;
-    const glm::vec3& getOrientation() const;
+    const glm::vec3& GetPosition() const;
+    const glm::vec3& GetOrientation() const;
 
-    const glm::mat4& getViewMatrix() const;
-    const glm::mat4& getPerspectiveProjection() const;
-    const glm::mat4& getOrthoProjection() const;
-    const glm::mat4& getMatrix() const;
+    const glm::mat4& GetViewMatrix() const;
+    const glm::mat4& GetPerspectiveProjection() const;
+    const glm::mat4& GetOrthoProjection() const;
+    const glm::mat4& GetMatrix() const;
 
 private:
 

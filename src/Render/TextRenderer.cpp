@@ -52,8 +52,8 @@ TextRenderer::~TextRenderer()
     if (_glyphUVScaleVBO != 0)
         glDeleteBuffers(1, &_glyphUVScaleVBO);
 
-    _VAO.deleteObject();
-    _VBO.deleteObject();
+    _VAO.DeleteObject();
+    _VBO.DeleteObject();
 }
 
 
@@ -229,9 +229,9 @@ void TextRenderer::CreateBuffers()
     // Quad VAO/VBO
     // --------------------------------------------------
 
-    _VAO.bind();
+    _VAO.Bind();
 
-    _VBO.bind();
+    _VBO.Bind();
 
     glVertexAttribPointer(
         0,
@@ -244,7 +244,7 @@ void TextRenderer::CreateBuffers()
 
     glEnableVertexAttribArray(0);
 
-    _VBO.unbind();
+    _VBO.Unbind();
 
 
     // --------------------------------------------------
@@ -342,7 +342,7 @@ void TextRenderer::CreateBuffers()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    _VAO.unbind();
+    _VAO.Unbind();
 }
 
 
@@ -350,9 +350,9 @@ void TextRenderer::SetProjection(
     const glm::mat4& projection
 )
 {
-    _shader.activate();
+    _shader.Activate();
 
-    _shader.setMatrix(
+    _shader.SetMatrix(
         projection,
         "projection"
     );
@@ -520,9 +520,9 @@ void TextRenderer::RenderText(
     // Render text.
     // --------------------------------------------------
 
-    _shader.activate();
+    _shader.Activate();
 
-    _shader.setVec3(
+    _shader.SetVec3(
         color,
         "textColor"
     );
@@ -533,7 +533,7 @@ void TextRenderer::RenderText(
         _textureArray
     );
 
-    _VAO.bind();
+    _VAO.Bind();
 
     glDrawArraysInstanced(
         GL_TRIANGLE_STRIP,
@@ -542,7 +542,7 @@ void TextRenderer::RenderText(
         length
     );
 
-    _VAO.unbind();
+    _VAO.Unbind();
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }

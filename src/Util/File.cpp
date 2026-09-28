@@ -4,12 +4,12 @@
 #include <sstream>
 #include <iostream>
 
-std::string Util::rootFilePath()
+std::string Util::RootFilePath()
 {
 	return std::filesystem::current_path().string();
 }
 
-std::string Util::parseFileToString(const std::string& fileName)
+std::string Util::ParseFileToString(const std::string& fileName)
 {
 	// Setting the result
 	std::string result;

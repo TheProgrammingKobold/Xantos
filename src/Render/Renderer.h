@@ -8,6 +8,7 @@
 
 #include "DrawCommand.h"
 #include "TextRenderer.h"
+#include "SkyboxRenderer.h"
 
 class Camera;
 class Window;
@@ -33,11 +34,14 @@ private:
 
     void Render3D();
     void RenderText();
+    void RenderSkybox();
 
 private:
     Window& _window;
     Camera& _camera;
     std::unique_ptr<TextRenderer> _textRenderer;
+	std::unique_ptr<SkyboxRenderer> _skyboxRenderer;
+    std::unique_ptr<Cubemap> _skybox;
 
     std::vector<DrawCommand> _drawCommands;
     std::vector<TextCommand> _textCommands;

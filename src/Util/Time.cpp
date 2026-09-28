@@ -6,12 +6,12 @@
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-float Util::getDeltaTime()
+float Util::GetDeltaTime()
 {
 	return deltaTime;
 }
 
-void Util::updateDeltaTime()
+void Util::UpdateDeltaTime()
 {
 	float currentFrame = static_cast<float>(glfwGetTime());
 	deltaTime = currentFrame - lastFrame;

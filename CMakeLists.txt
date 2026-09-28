@@ -27,6 +27,8 @@ add_executable (Xantos
 "src/Render/Renderer.cpp"
 "src/Render/Mesh.cpp"
 "src/Render/Material.cpp"
+"src/Render/Cubemap.cpp"
+"src/Render/SkyboxRenderer.cpp"
 "src/Events/EventBus.cpp"
 "src/Core/Window.cpp"
 "src/Core/Scene.cpp"

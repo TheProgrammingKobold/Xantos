@@ -9,10 +9,10 @@ Camera::Camera(
     _height(height),
     _Position(position)
 {
-    updateMatrix();
+    UpdateMatrix();
 }
 
-void Camera::updateMatrix()
+void Camera::UpdateMatrix()
 {
     _viewMatrix = glm::lookAt(
         _Position,
@@ -49,7 +49,7 @@ void Camera::Rotate(float yaw, float pitch)
     );
 
     _Orientation = GetForward();
-    updateMatrix();
+    UpdateMatrix();
 }
 
 glm::vec3 Camera::GetForward() const
@@ -82,39 +82,39 @@ glm::vec3 Camera::GetRight() const
 // Position / Direction
 // --------------------
 
-void Camera::setPosition(const glm::vec3& position)
+void Camera::SetPosition(const glm::vec3& position)
 {
     _Position = position;
-    updateMatrix();
+    UpdateMatrix();
 }
 
-void Camera::setOrientation(const glm::vec3& orientation)
+void Camera::SetOrientation(const glm::vec3& orientation)
 {
     _Orientation = glm::normalize(orientation);
-    updateMatrix();
+    UpdateMatrix();
 }
 
 // --------------------
 // Window dimensions
 // --------------------
 
-void Camera::setWidth(int width)
+void Camera::SetWidth(int width)
 {
     _width = width;
-    updateMatrix();
+    UpdateMatrix();
 }
 
-void Camera::setHeight(int height)
+void Camera::SetHeight(int height)
 {
     _height = height;
-    updateMatrix();
+    UpdateMatrix();
 }
 
-void Camera::setWidthHeight(int width, int height)
+void Camera::SetWidthHeight(int width, int height)
 {
     _width = width;
     _height = height;
-    updateMatrix();
+    UpdateMatrix();
 }
 
 
@@ -122,22 +122,22 @@ void Camera::setWidthHeight(int width, int height)
 // Getters
 // --------------------
 
-const glm::mat4& Camera::getPerspectiveProjection() const
+const glm::mat4& Camera::GetPerspectiveProjection() const
 {
     return _perspectiveProjection;
 }
 
-const glm::mat4& Camera::getOrthoProjection() const
+const glm::mat4& Camera::GetOrthoProjection() const
 {
     return _orthoProjection;
 }
 
-const glm::mat4& Camera::getViewMatrix() const
+const glm::mat4& Camera::GetViewMatrix() const
 {
     return _viewMatrix;
 }
 
-const glm::mat4& Camera::getMatrix() const
+const glm::mat4& Camera::GetMatrix() const
 {
     return _cameraMatrix;
 }

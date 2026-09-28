@@ -11,13 +11,13 @@ Material::Material(
 
 void Material::Bind()
 {
-    _shader->activate();
+    _shader->Activate();
 
     if (_texture)
     {
-        _texture->bind();
+        _texture->Bind();
 
-        _texture->texUnit(
+        _texture->TexUnit(
             *_shader,
             "tex",
             0

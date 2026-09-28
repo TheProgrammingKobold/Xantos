@@ -17,11 +17,11 @@ public:
     VBO(const std::vector<Vertex>& vertices);
     VBO(const std::vector<float>& vertices);
 
-    void bind();
-    void unbind();
-    void deleteObject() const;
+    void Bind();
+    void Unbind();
+    void DeleteObject() const;
 
-    const GLuint getID() const { return _ID; }
+    const GLuint GetID() const { return _ID; }
 
 private:
 

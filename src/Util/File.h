@@ -4,6 +4,6 @@
 
 namespace Util
 {
-	std::string rootFilePath();
-	std::string parseFileToString(const std::string& fileName);
+	std::string RootFilePath();
+	std::string ParseFileToString(const std::string& fileName);
 }
