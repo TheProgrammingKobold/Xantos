@@ -84,7 +84,7 @@ void Renderer::ExecuteCommands()
     Render3D();
     RenderText();
 }
-
+ 
 void Renderer::Render3D()
 {
     for (const auto& command : _drawCommands)
