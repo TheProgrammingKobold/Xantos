@@ -140,12 +140,14 @@ void render(Window& window)
     // -----------
     while (running)
     {
+        // Handles events.
         events.Dispatch();
 
 		Util::updateDeltaTime();
 
         renderer.BeginFrame();
         
+        // For player and camera compatibility
         player.SetOrientation(camera.GetForward());
 
         scene.Update(Util::getDeltaTime());
@@ -158,7 +160,7 @@ void render(Window& window)
             {
                 "Testing of cool text rendering\nTesting of all kinds of cool stuff!\nHello every nyan!",
                 {20.0f, 30.0f},
-                1.0f,
+                0.5f,
                 glm::vec3(1.0f)
             });
         
@@ -187,6 +189,7 @@ int main()
     while (running)
     {
         glfwPollEvents();
+        window.ApplyPendingMouseCapture();
 
 
         if (window.ShouldClose())

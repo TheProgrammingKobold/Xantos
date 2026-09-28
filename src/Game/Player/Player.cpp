@@ -33,23 +33,34 @@ void Player::Update(float deltaTime)
     if (Input::IsKeyDown(GLFW_KEY_A))
         movement -= right;
 
+    if (Input::IsKeyDown(GLFW_KEY_SPACE))
+        movement += glm::vec3(0.0f, 1.0f, 0.0f);
+
+    if (Input::IsKeyDown(GLFW_KEY_LEFT_CONTROL))
+    {
+        movement -= glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+
     if (glm::length(movement) > 0.0f)
         movement = glm::normalize(movement);
 
     transform.position += movement * _speed * deltaTime;
 
-    glm::vec2 mouseDelta = Input::GetMouseDelta();
+    if (Input::IsMouseCaptured())
+    {
+        glm::vec2 mouseDelta = Input::GetMouseDelta();
 
-    constexpr float sensitivity = 0.002f;
+        constexpr float sensitivity = 0.002f;
 
-    _yaw += mouseDelta.x * sensitivity;
-    _pitch -= mouseDelta.y * sensitivity;
+        _yaw += mouseDelta.x * sensitivity;
+        _pitch -= mouseDelta.y * sensitivity;
 
-    _pitch = glm::clamp(
-        _pitch,
-        glm::radians(-89.0f),
-        glm::radians(89.0f)
-    );
+        _pitch = glm::clamp(
+            _pitch,
+            glm::radians(-89.0f),
+            glm::radians(89.0f)
+        );
+    }
 
 }
 

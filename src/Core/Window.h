@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <atomic>
 #include <GLFW/glfw3.h>
 
 class EventBus;
@@ -18,6 +19,9 @@ public:
     void PollEvents();
     void SwapBuffers();
 
+    void SetMouseCaptured(bool captured);
+    void ApplyPendingMouseCapture();
+
     bool ShouldClose() const;
     void Close();
 
@@ -28,6 +32,8 @@ public:
 
 private:
     GLFWwindow* _window = nullptr;
+    std::atomic<bool> _requestedMouseCaptured = false;
+    bool _mouseCaptured = false;
 
     int _width;
     int _height;

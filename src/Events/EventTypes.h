@@ -152,3 +152,20 @@ public:
         return typeid(MouseButtonReleasedEvent);
     }
 };
+
+class MouseCaptureChangedEvent : public Event
+{
+public:
+
+    MouseCaptureChangedEvent(bool captured)
+        : captured(captured)
+    {
+    }
+
+    bool captured;
+
+    std::type_index GetType() const override
+    {
+        return typeid(MouseCaptureChangedEvent);
+    }
+};

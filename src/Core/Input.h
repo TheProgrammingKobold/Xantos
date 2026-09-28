@@ -19,6 +19,9 @@ public:
     static glm::vec2 GetMousePosition() { return _mousePosition; }
     static glm::vec2 GetMouseDelta() { return _mouseDelta; }
 
+    static bool IsMouseCaptured();
+    static void SetMouseCaptured(bool captured);
+
     static void SetKeyState(int key, bool down);
 
     static void EndFrame();
@@ -28,4 +31,6 @@ private:
 
     static glm::vec2 _mousePosition;
     static glm::vec2 _mouseDelta;
+
+    static bool _mouseCaptured;
 };

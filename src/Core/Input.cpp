@@ -5,13 +5,19 @@
 bool Input::_keys[GLFW_KEY_LAST + 1] = {};
 glm::vec2 Input::_mousePosition = {};
 glm::vec2 Input::_mouseDelta = {};
+bool Input::_mouseCaptured = false;
 
 void Input::Initialize(EventBus& events)
 {
     events.Subscribe<KeyPressedEvent>(
-        [](const KeyPressedEvent& event)
+        [&events](const KeyPressedEvent& event)
         {
             _keys[event.key] = true;
+            if (event.key == GLFW_KEY_E)
+            {
+                SetMouseCaptured(!_mouseCaptured);
+                events.Post<MouseCaptureChangedEvent>(_mouseCaptured);
+            }
         }
     );
 
@@ -41,6 +47,16 @@ bool Input::IsKeyDown(int key)
         return false;
 
     return _keys[key];
+}
+
+bool Input::IsMouseCaptured()
+{
+    return _mouseCaptured;
+}
+
+void Input::SetMouseCaptured(bool captured)
+{
+    _mouseCaptured = captured;
 }
 
 void Input::SetKeyState(int key, bool down)

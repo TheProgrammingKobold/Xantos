@@ -49,6 +49,11 @@ Window::Window(
     );
 
     glfwSetCursorPosCallback(_window, CursorPositionCallback);
+
+    _events.Subscribe<MouseCaptureChangedEvent>([&](const MouseCaptureChangedEvent& event) 
+        {
+            SetMouseCaptured(event.captured);
+        });
 }
 
 Window::~Window()
@@ -108,6 +113,7 @@ void Window::KeyCallback(
         );
         break;
     }
+    
 }
 
 void Window::CursorPositionCallback(
@@ -133,6 +139,27 @@ void Window::PollEvents()
 void Window::SwapBuffers()
 {
     glfwSwapBuffers(_window);
+}
+
+void Window::SetMouseCaptured(bool captured)
+{
+    _requestedMouseCaptured.store(captured, std::memory_order_relaxed);
+}
+
+void Window::ApplyPendingMouseCapture()
+{
+    const bool requested =
+        _requestedMouseCaptured.load(std::memory_order_relaxed);
+
+    if (requested == _mouseCaptured)
+        return;
+
+    _mouseCaptured = requested;
+    glfwSetInputMode(
+        _window,
+        GLFW_CURSOR,
+        _mouseCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL
+    );
 }
 
 bool Window::ShouldClose() const
