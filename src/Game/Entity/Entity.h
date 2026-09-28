@@ -10,6 +10,11 @@ class Material;
 class Entity
 {
 public:
+    virtual ~Entity() = default;
+
+    virtual void Update(float deltaTime) {}
+
+
     Transform transform;
 
     std::shared_ptr<Mesh> mesh;

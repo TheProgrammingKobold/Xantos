@@ -47,4 +47,6 @@ private:
         int action,
         int mods
     );
+
+    static void CursorPositionCallback(GLFWwindow* window, double x, double y);
 };

@@ -23,6 +23,10 @@ public:
 
     void updateMatrix();
 
+    void Rotate(float yaw, float pitch);
+    glm::vec3 GetForward() const;
+    glm::vec3 GetRight() const;
+
     void setPosition(const glm::vec3& position);
     void setOrientation(const glm::vec3& orientation);
 
@@ -42,6 +46,9 @@ private:
 
     int _width;
     int _height;
+
+    float _yaw = 0.0f;
+    float _pitch = 0.0f;
 
     glm::vec3 _Position;
     glm::vec3 _Orientation = { 0.0f, 0.0f, -1.0f };

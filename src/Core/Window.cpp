@@ -47,6 +47,8 @@ Window::Window(
         _window,
         KeyCallback
     );
+
+    glfwSetCursorPosCallback(_window, CursorPositionCallback);
 }
 
 Window::~Window()
@@ -106,6 +108,21 @@ void Window::KeyCallback(
         );
         break;
     }
+}
+
+void Window::CursorPositionCallback(
+    GLFWwindow* window,
+    double x,
+    double y
+)
+{
+    auto* self =
+        static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+    self->_events.Post<MouseMovedEvent>(
+        static_cast<float>(x),
+        static_cast<float>(y)
+    );
 }
 
 void Window::PollEvents()

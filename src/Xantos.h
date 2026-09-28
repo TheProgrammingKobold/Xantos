@@ -16,6 +16,8 @@
 #include "Render/Material.h"
 #include "Core/Scene.h"
 #include "Core/Window.h"
+#include "Core/Input.h"
+#include "Game/Player/Player.h"
 #include "Events/EventTypes.h"
 #include "Events/EventBus.h"
 #include "Util/File.h"

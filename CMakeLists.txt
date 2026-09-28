@@ -30,6 +30,8 @@ add_executable (Xantos
 "src/Events/EventBus.cpp"
 "src/Core/Window.cpp"
 "src/Core/Scene.cpp"
+"src/Core/Input.cpp"
+"src/Game/Player/Player.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"
 "src/Util/File.cpp")

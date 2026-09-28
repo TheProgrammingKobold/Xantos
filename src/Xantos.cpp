@@ -70,8 +70,8 @@ void render(Window& window)
         9, 10, 11,
 
         // Bottom
-        12, 14, 13,
-        13, 14, 15,
+        12, 13, 14,
+        14, 13, 15,
 
         // Left
         16, 18, 17,
@@ -100,11 +100,29 @@ void render(Window& window)
     auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
 
     Scene scene;
-    Entity& ratCube = scene.CreateEntity();
-    ratCube.mesh = cube;
-    ratCube.material = ratCubeMaterial;
-    ratCube.transform = transform;
+    Entity& ratCube1 = scene.CreateEntity<Entity>();
+    ratCube1.mesh = cube;
+    ratCube1.material = ratCubeMaterial;
+    ratCube1.transform = transform;
 
+    Entity& ratCube2 = scene.CreateEntity<Entity>();
+    ratCube2.mesh = cube;
+    ratCube2.material = ratCubeMaterial;
+    ratCube2.transform = transform;
+    ratCube2.transform.position = { 3.0f, 0.0f, -2.0f };
+
+    Entity& ratCube3 = scene.CreateEntity<Entity>();
+    ratCube3.mesh = cube;
+    ratCube3.material = ratCubeMaterial;
+    ratCube3.transform = transform;
+    ratCube3.transform.position = { -3.0f, 0.0f, -2.0f };
+
+    auto& player = scene.CreateEntity<Player>();
+
+    player.mesh = cube;
+    player.material = ratCubeMaterial;
+
+    player.transform.position = { -10.0f, 0.0f, 1.0f };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -127,9 +145,13 @@ void render(Window& window)
 		Util::updateDeltaTime();
 
         renderer.BeginFrame();
+        
+        player.SetOrientation(camera.GetForward());
 
-        scene.Render(renderer);
         scene.Update(Util::getDeltaTime());
+
+        camera.setPosition(player.transform.position);
+        camera.Rotate(player.GetYaw(), player.GetPitch());
 
         
         renderer.Submit(
@@ -140,17 +162,19 @@ void render(Window& window)
                 glm::vec3(1.0f)
             });
         
+        scene.Render(renderer);
 
         renderer.ExecuteCommands();
 
         renderer.EndFrame();
 
-
+        Input::EndFrame();
     }
 }
 
 int main()
 {
+    Input::Initialize(events);
     Window window(
         800,
         600,

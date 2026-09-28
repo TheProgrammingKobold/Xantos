@@ -37,6 +37,46 @@ void Camera::updateMatrix()
     _cameraMatrix = _perspectiveProjection * _viewMatrix;
 }
 
+void Camera::Rotate(float yaw, float pitch)
+{
+    _yaw = yaw;
+    _pitch = pitch;
+
+    _pitch = glm::clamp(
+        _pitch,
+        glm::radians(-89.0f),
+        glm::radians(89.0f)
+    );
+
+    _Orientation = GetForward();
+    updateMatrix();
+}
+
+glm::vec3 Camera::GetForward() const
+{
+    glm::vec3 forward;
+
+    forward.x =
+        cos(_pitch) * sin(_yaw);
+
+    forward.y =
+        sin(_pitch);
+
+    forward.z =
+        -cos(_pitch) * cos(_yaw);
+
+    return glm::normalize(forward);
+}
+
+glm::vec3 Camera::GetRight() const
+{
+    return glm::normalize(
+        glm::cross(
+            GetForward(),
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        )
+    );
+}
 
 // --------------------
 // Position / Direction
