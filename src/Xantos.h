@@ -17,6 +17,7 @@
 #include "Core/Scene.h"
 #include "Core/Window.h"
 #include "Core/Input.h"
+#include "Core/TerrainGenerator.h"
 #include "Game/Player/Player.h"
 #include "Events/EventTypes.h"
 #include "Events/EventBus.h"

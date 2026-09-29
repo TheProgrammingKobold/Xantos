@@ -33,6 +33,7 @@ add_executable (Xantos
 "src/Core/Window.cpp"
 "src/Core/Scene.cpp"
 "src/Core/Input.cpp"
+"src/Core/TerrainGenerator.cpp"
 "src/Game/Player/Player.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"
@@ -50,6 +51,7 @@ target_include_directories(Xantos PRIVATE
 "Libs/GLM"
 "Libs/STB"
 "Libs/FreeType/include"
+"Libs/SIV"
 )
 
 target_link_libraries(Xantos PRIVATE 

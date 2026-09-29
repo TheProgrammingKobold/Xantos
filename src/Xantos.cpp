@@ -99,30 +99,32 @@ void Render(Window& window)
 
     auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
 
+    const int width = 32;
+	const int depth = 32;
+
+	TerrainGenerator terrainGenerator(width, depth);
+	terrainGenerator.Generate();
+
     Scene scene;
-    Entity& ratCube1 = scene.CreateEntity<Entity>();
-    ratCube1.mesh = cube;
-    ratCube1.material = ratCubeMaterial;
-    ratCube1.transform = transform;
 
-    Entity& ratCube2 = scene.CreateEntity<Entity>();
-    ratCube2.mesh = cube;
-    ratCube2.material = ratCubeMaterial;
-    ratCube2.transform = transform;
-    ratCube2.transform.position = { 3.0f, 0.0f, -2.0f };
-
-    Entity& ratCube3 = scene.CreateEntity<Entity>();
-    ratCube3.mesh = cube;
-    ratCube3.material = ratCubeMaterial;
-    ratCube3.transform = transform;
-    ratCube3.transform.position = { -3.0f, 0.0f, -2.0f };
+	for (int z = 0; z < depth; ++z)
+	{
+		for (int x = 0; x < width; ++x)
+		{
+			int height = terrainGenerator.GetHeight(x, z);
+			Entity& cubeEntity = scene.CreateEntity<Entity>();
+			cubeEntity.mesh = cube;
+			cubeEntity.material = ratCubeMaterial;
+			cubeEntity.transform.position = { static_cast<float>(x), static_cast<float>(height), static_cast<float>(z) };
+		}
+	}
 
     auto& player = scene.CreateEntity<Player>();
 
     player.mesh = cube;
     player.material = ratCubeMaterial;
 
-    player.transform.position = { -10.0f, 0.0f, 1.0f };
+    player.transform.position = { 0.0f, 0.0f, 1.0f };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -199,8 +201,8 @@ int main()
 {
     Input::Initialize(events);
     Window window(
-        800,
-        600,
+        1920,
+        1080,
         "Xantos",
         events
     );

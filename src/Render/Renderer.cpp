@@ -127,12 +127,10 @@ void Renderer::RenderText()
 
 void Renderer::RenderSkybox()
 {
-    glDisable(GL_CULL_FACE);
     _skyboxRenderer->Render(
         _camera,
         *_skybox
     );
-    glEnable(GL_CULL_FACE);
 }
 
 void Renderer::EndFrame()
