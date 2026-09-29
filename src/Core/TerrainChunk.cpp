@@ -17,12 +17,17 @@ void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 		{
 			int worldX = _chunkX * CHUNK_SIZE + x;
 			int worldZ = _chunkZ * CHUNK_SIZE + z;
-			int height = generator.GetHeight(worldX, worldZ);
+			float height = generator.GetHeight(worldX, worldZ);
+			glm::vec3 normal = glm::normalize(glm::vec3(
+				generator.GetHeight(worldX - 1, worldZ) - generator.GetHeight(worldX + 1, worldZ),
+				2.0f,
+				generator.GetHeight(worldX, worldZ - 1) - generator.GetHeight(worldX, worldZ + 1)
+			));
 			glm::vec2 texUV(
-				static_cast<float>(x) / CHUNK_SIZE,
-				static_cast<float>(z) / CHUNK_SIZE
+				static_cast<float>(x),
+				static_cast<float>(z)
 			);
-			_vertices.push_back({ glm::vec3(static_cast<float>(x), static_cast<float>(height), static_cast<float>(z)), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f), texUV });
+			_vertices.push_back({ glm::vec3(static_cast<float>(x), height, static_cast<float>(z)), normal, glm::vec3(1.0f), texUV });
 		}
 	}
 

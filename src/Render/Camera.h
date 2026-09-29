@@ -61,5 +61,5 @@ private:
 
     float _FOVdegree = 90.0f;
     float _nearPlane = 0.1f;
-    float _farPlane = 100.0f;
+    float _farPlane = 1000.0f;
 };

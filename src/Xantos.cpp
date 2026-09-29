@@ -87,10 +87,6 @@ void Render(Window& window)
 
     Renderer renderer(window, camera);
 
-    auto cube = std::make_shared<Mesh>(vertices, indices);
-
-    Transform transform;
-
     auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
 
@@ -99,8 +95,8 @@ void Render(Window& window)
 
     auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
 
-    const int worldWidth = 2;
-    const int worldDepth = 2;
+    const int worldWidth = 32;
+    const int worldDepth = 32;
     const int chunkSize = TerrainChunk::GetChunkSize();
 
     TerrainGenerator terrainGenerator(worldWidth * chunkSize + 1, worldDepth * chunkSize + 1);
@@ -134,10 +130,9 @@ void Render(Window& window)
 
     auto& player = scene.CreateEntity<Player>();
 
-    player.mesh = cube;
     player.material = ratCubeMaterial;
 
-    player.transform.position = { 0.0f, 0.0f, 1.0f };
+    player.transform.position = { static_cast<float>(worldWidth * chunkSize / 2), 0.0f, static_cast<float>(worldDepth * chunkSize / 2) };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

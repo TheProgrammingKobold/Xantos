@@ -9,11 +9,11 @@ public:
 
     void Generate();
 
-    int GetHeight(int x, int z) const;
+    float GetHeight(int x, int z) const;
 
 private:
     int _width;
     int _depth;
 
-    std::vector<int> _heights;
+    std::vector<float> _heights;
 };
