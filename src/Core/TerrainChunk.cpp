@@ -1,16 +1,19 @@
 #include "TerrainChunk.h"
 
+#include  <glm/gtc/matrix_transform.hpp>
 
-TerrainChunk::TerrainChunk(const TerrainGenerator& generator, int chunkX, int chunkZ)
+TerrainChunk::TerrainChunk(const TerrainGenerator& generator, std::shared_ptr<Material> material, int chunkX, int chunkZ)
 	: _chunkX(chunkX), _chunkZ(chunkZ)
 {
+	_drawCommand.material = std::move(material);
+	_drawCommand.transform = glm::translate(glm::mat4(1.0f), glm::vec3(_chunkX * CHUNK_SIZE, 0.0f, _chunkZ * CHUNK_SIZE));
 	GenerateMesh(generator);
 }
 
 void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 {
-	_vertices.clear();
-	_indices.clear();
+	std::vector<Vertex> _vertices;
+	std::vector<GLuint> _indices;
 	for (int z = 0; z <= CHUNK_SIZE; ++z)
 	{
 		for (int x = 0; x <= CHUNK_SIZE; ++x)
@@ -43,4 +46,11 @@ void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 			_indices.insert(_indices.end(), { topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight });
 		}
 	}
+
+	_drawCommand.mesh = std::make_shared<Mesh>(_vertices, _indices);
+}
+
+void TerrainChunk::Render(Renderer& renderer) const
+{
+	renderer.Submit(_drawCommand);
 }

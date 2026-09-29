@@ -21,4 +21,9 @@ void Scene::Render(Renderer& renderer)
             entity->transform.GetMatrix()
             });
     }
+
+	for (const auto& terrainChunk : _terrainChunks)
+	{
+		terrainChunk->Render(renderer);
+	}
 }

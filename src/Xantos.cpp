@@ -89,8 +89,6 @@ void Render(Window& window)
 
     auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
-
-    //TextureInfo floorTextureInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, "floor.png");
     auto floorTexture = std::make_shared<Texture>("floor.png");
 
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
@@ -103,30 +101,15 @@ void Render(Window& window)
 	terrainGenerator.Generate();
 
     Scene scene;
-
-	std::vector<std::shared_ptr<Mesh>> terrainChunks;
-	terrainChunks.reserve(worldWidth* worldDepth);
     
     for (int z = 0; z < worldDepth; ++z)
     {
 		for (int x = 0; x < worldWidth; ++x)
 		{
-			TerrainChunk chunk(terrainGenerator, x, z);
-			auto mesh = std::make_unique<Mesh>(chunk.GetVertices(), chunk.GetIndices());
-			terrainChunks.push_back(std::move(mesh));
+			std::unique_ptr<TerrainChunk> chunk = std::make_unique<TerrainChunk>(terrainGenerator, floorMaterial, x, z);
+			scene.AddTerrainChunk(std::move(chunk));
 		}
     }
-
-	for (int z = 0; z < worldDepth; ++z)
-	{
-		for (int x = 0; x < worldWidth; ++x)
-		{
-			auto& terrainEntity = scene.CreateEntity<Entity>();
-			terrainEntity.mesh = terrainChunks[x + z * worldWidth];
-			terrainEntity.material = floorMaterial;
-            terrainEntity.transform.position = { static_cast<float>(x * chunkSize), 0.0f, static_cast<float>(z * chunkSize) };
-		}
-	}
 
     auto& player = scene.CreateEntity<Player>();
 

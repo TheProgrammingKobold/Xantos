@@ -3,23 +3,25 @@
 #include <vector>
 #include "../Render/VBO.h"
 #include "TerrainGenerator.h"
+#include "../Render/Mesh.h"
+#include "../Render/Material.h"
+#include "../Render/Renderer.h"
 
 
 class TerrainChunk
 {
 public:
-	TerrainChunk(const TerrainGenerator& generator, int chunkX, int chunkZ);
+	TerrainChunk(const TerrainGenerator& generator, std::shared_ptr<Material> material, int chunkX, int chunkZ);
 
 	void GenerateMesh(const TerrainGenerator& generator);
 
-	const std::vector<Vertex>& GetVertices() const { return _vertices; }
-	const std::vector<GLuint>& GetIndices() const { return _indices; }
+	void Render(Renderer& renderer) const;
 
 	static int GetChunkSize() { return CHUNK_SIZE; }
 
 private:
-	std::vector<Vertex> _vertices;
-	std::vector<GLuint> _indices;
+
+	DrawCommand _drawCommand;
 
 	constexpr static int CHUNK_SIZE = 16;
 
