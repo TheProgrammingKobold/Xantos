@@ -30,6 +30,7 @@ add_executable (Xantos
 "src/Render/Cubemap.cpp"
 "src/Render/SkyboxRenderer.cpp"
 "src/Events/EventBus.cpp"
+"src/Core/TerrainChunk.cpp"
 "src/Core/Window.cpp"
 "src/Core/Scene.cpp"
 "src/Core/Input.cpp"

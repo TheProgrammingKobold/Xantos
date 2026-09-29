@@ -99,23 +99,36 @@ void Render(Window& window)
 
     auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
 
-    const int width = 32;
-	const int depth = 32;
+    const int worldWidth = 2;
+    const int worldDepth = 2;
+    const int chunkSize = TerrainChunk::GetChunkSize();
 
-	TerrainGenerator terrainGenerator(width, depth);
+    TerrainGenerator terrainGenerator(worldWidth * chunkSize + 1, worldDepth * chunkSize + 1);
 	terrainGenerator.Generate();
 
     Scene scene;
 
-	for (int z = 0; z < depth; ++z)
-	{
-		for (int x = 0; x < width; ++x)
+	std::vector<std::shared_ptr<Mesh>> terrainChunks;
+	terrainChunks.reserve(worldWidth* worldDepth);
+    
+    for (int z = 0; z < worldDepth; ++z)
+    {
+		for (int x = 0; x < worldWidth; ++x)
 		{
-			int height = terrainGenerator.GetHeight(x, z);
-			Entity& cubeEntity = scene.CreateEntity<Entity>();
-			cubeEntity.mesh = cube;
-			cubeEntity.material = ratCubeMaterial;
-			cubeEntity.transform.position = { static_cast<float>(x), static_cast<float>(height), static_cast<float>(z) };
+			TerrainChunk chunk(terrainGenerator, x, z);
+			auto mesh = std::make_unique<Mesh>(chunk.GetVertices(), chunk.GetIndices());
+			terrainChunks.push_back(std::move(mesh));
+		}
+    }
+
+	for (int z = 0; z < worldDepth; ++z)
+	{
+		for (int x = 0; x < worldWidth; ++x)
+		{
+			auto& terrainEntity = scene.CreateEntity<Entity>();
+			terrainEntity.mesh = terrainChunks[x + z * worldWidth];
+			terrainEntity.material = ratCubeMaterial;
+            terrainEntity.transform.position = { static_cast<float>(x * chunkSize), 0.0f, static_cast<float>(z * chunkSize) };
 		}
 	}
 
