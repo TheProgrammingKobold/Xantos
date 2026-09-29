@@ -41,6 +41,15 @@ void Player::Update(float deltaTime)
         movement -= glm::vec3(0.0f, 1.0f, 0.0f);
     }
 
+	if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT))
+	{
+		_speed = 20.0f;
+	}
+	else
+	{
+		_speed = 5.0f;
+	}
+
     if (glm::length(movement) > 0.0f)
         movement = glm::normalize(movement);
 

@@ -11,9 +11,11 @@
 * ------------
 */
 
-Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, std::string fileName)
-	:type(texType), m_slot(slot)
+
+Texture::Texture(const std::string& fileName)
 {
+	type = GL_TEXTURE_2D;
+	m_slot = GL_TEXTURE0;
 	int width, height, numColCh;
 
 	stbi_set_flip_vertically_on_load(true);
@@ -23,6 +25,7 @@ Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, s
 	if (!std::filesystem::is_directory(filePath) && !std::filesystem::exists(filePath))
 	{
 		std::cerr << "ERROR: Couldn't load file at path '" << filePath << "'\n";
+		// TODO: Change this default texture to a path thats relevent to the project
 		filePath = Util::RootFilePath() + "extern/Textures/Default.png";
 	}
 
@@ -33,27 +36,41 @@ Texture::Texture(GLenum texType, GLenum slot, GLenum format, GLenum pixelType, s
 		std::cerr << "ERROR: Failed to load image data!\n";
 	}
 
+	int format;
+
+	switch (numColCh)
+	{
+	case 1:
+		format = GL_RED;
+		break;
+	case 2:
+		format = GL_RG;
+		break;
+	case 3:
+		format = GL_RGB;
+		break;
+	case 4:
+		format = GL_RGBA;
+		break;
+	default:
+		std::cerr << "ERROR: Unsupported number of color channels!\n";
+	}
+
 	glGenTextures(1, &ID);
 
 	Bind();
 
-	glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(type, 0, GL_RGBA, width, height, 0, format, pixelType, imageBytes);
-	glGenerateMipmap(type);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, imageBytes);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(imageBytes);
 
 	Unbind();
-}
-
-// Constructor delegation ensures the base constructor initializes members, avoiding temporary objects.
-Texture::Texture(TextureInfo info)
-	:Texture(info.type, info.slot, info.format, info.pixelType, info.fileName)
-{
 }
 
 const void Texture::UpdateTexture(GLenum format, GLenum pixelType, int width, int height, const void* data) const

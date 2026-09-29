@@ -90,13 +90,13 @@ void Render(Window& window)
     auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
 
-    TextureInfo ratButtInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE, "rat_butt.jpg");
-    auto ratButtTexture = std::make_shared<Texture>(ratButtInfo);
+    //TextureInfo floorTextureInfo(GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, "floor.png");
+    auto floorTexture = std::make_shared<Texture>("floor.png");
 
-    auto ratCubeMaterial = std::make_shared<Material>(shader, ratButtTexture);
-
-    const int worldWidth = 32;
-    const int worldDepth = 32;
+    auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
+     
+    const int worldWidth = 16;
+    const int worldDepth = 16;
     const int chunkSize = TerrainChunk::GetChunkSize();
 
     TerrainGenerator terrainGenerator(worldWidth * chunkSize + 1, worldDepth * chunkSize + 1);
@@ -123,16 +123,14 @@ void Render(Window& window)
 		{
 			auto& terrainEntity = scene.CreateEntity<Entity>();
 			terrainEntity.mesh = terrainChunks[x + z * worldWidth];
-			terrainEntity.material = ratCubeMaterial;
+			terrainEntity.material = floorMaterial;
             terrainEntity.transform.position = { static_cast<float>(x * chunkSize), 0.0f, static_cast<float>(z * chunkSize) };
 		}
 	}
 
     auto& player = scene.CreateEntity<Player>();
 
-    player.material = ratCubeMaterial;
-
-    player.transform.position = { static_cast<float>(worldWidth * chunkSize / 2), 0.0f, static_cast<float>(worldDepth * chunkSize / 2) };
+    player.transform.position = { static_cast<float>(worldWidth * chunkSize / 2), 10.0f, static_cast<float>(worldDepth * chunkSize / 2) };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
