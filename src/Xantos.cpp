@@ -95,8 +95,8 @@ void Render(Window& window)
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
      
     const int chunkSize = TerrainChunk::GetChunkSize();
-    constexpr int loadRadius = 4;
-    constexpr int unloadRadius = 5;
+    constexpr int loadRadius = 10;
+    constexpr int unloadRadius = loadRadius + 1;
 
     TerrainGenerator terrainGenerator;
 
@@ -183,9 +183,10 @@ void Render(Window& window)
             static_cast<int>(std::round(position.x)),
             static_cast<int>(std::round(position.z)));
 
-        if (position.y - 1.0f < groundY)
+        const float playerBottom = position.y + player.GetAABB().min.y;
+        if (playerBottom < groundY)
         {
-            player.transform.position.y = groundY + 1.0f;
+            player.transform.position.y = groundY - player.GetAABB().min.y;
 			player.SetGrounded(true);
         }
         else
@@ -219,8 +220,8 @@ int main()
 {
     Input::Initialize(events);
     Window window(
-        1920,
-        1080,
+        1280,
+        720,
         "Xantos",
         events
     );
