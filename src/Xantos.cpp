@@ -5,6 +5,7 @@
 #include <iostream>
 #include <atomic>
 #include <thread>
+#include <cmath>
 
 EventBus events;
 
@@ -93,27 +94,18 @@ void Render(Window& window)
 
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
      
-    const int worldWidth = 128;
-    const int worldDepth = 128;
     const int chunkSize = TerrainChunk::GetChunkSize();
+    constexpr int loadRadius = 4;
+    constexpr int unloadRadius = 5;
 
-    TerrainGenerator terrainGenerator(worldWidth * chunkSize + 1, worldDepth * chunkSize + 1);
-	terrainGenerator.Generate();
+    TerrainGenerator terrainGenerator;
 
     Scene scene;
-    
-    for (int z = 0; z < worldDepth; ++z)
-    {
-		for (int x = 0; x < worldWidth; ++x)
-		{
-			std::unique_ptr<TerrainChunk> chunk = std::make_unique<TerrainChunk>(terrainGenerator, floorMaterial, x, z);
-			scene.AddTerrainChunk(std::move(chunk));
-		}
-    }
 
     auto& player = scene.CreateEntity<Player>();
 
-    player.transform.position = { static_cast<float>(worldWidth * chunkSize / 2), 10.0f, static_cast<float>(worldDepth * chunkSize / 2) };
+    constexpr int spawnChunk = 16;
+    player.transform.position = { static_cast<float>(spawnChunk * chunkSize), 10.0f, static_cast<float>(spawnChunk * chunkSize) };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -163,6 +155,43 @@ void Render(Window& window)
         player.SetOrientation(camera.GetForward());
 
         scene.Update(Util::GetDeltaTime());
+
+        const auto& position = player.transform.position;
+        const int playerChunkX = static_cast<int>(std::floor(position.x / chunkSize));
+        const int playerChunkZ = static_cast<int>(std::floor(position.z / chunkSize));
+
+        scene.RemoveTerrainChunksOutsideRadius(playerChunkX, playerChunkZ, unloadRadius);
+
+        for (int dz = -loadRadius; dz <= loadRadius; ++dz)
+        {
+            for (int dx = -loadRadius; dx <= loadRadius; ++dx)
+            {
+                if (dx * dx + dz * dz > loadRadius * loadRadius)
+                    continue;
+
+                const int chunkX = playerChunkX + dx;
+                const int chunkZ = playerChunkZ + dz;
+                if (!scene.HasTerrainChunk(chunkX, chunkZ))
+                {
+                    auto chunk = std::make_unique<TerrainChunk>(terrainGenerator, floorMaterial, chunkX, chunkZ);
+                    scene.AddTerrainChunk(chunkX, chunkZ, std::move(chunk));
+                }
+            }
+        }
+
+        const float groundY = terrainGenerator.GetHeight(
+            static_cast<int>(std::round(position.x)),
+            static_cast<int>(std::round(position.z)));
+
+        if (position.y - 1.0f < groundY)
+        {
+            player.transform.position.y = groundY + 1.0f;
+			player.SetGrounded(true);
+        }
+        else
+        {
+			player.SetGrounded(false);
+        }
 
         camera.SetPosition(player.transform.position);
         camera.Rotate(player.GetYaw(), player.GetPitch());

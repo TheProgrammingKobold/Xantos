@@ -4,6 +4,7 @@
 #include "../Game/Entity/Entity.h"
 #include "../Core/TerrainChunk.h"
 #include "../Core/Frustum.h"
+#include <map>
 
 class Scene
 {
@@ -21,16 +22,23 @@ public:
         return reference;
     }
 
-	void AddTerrainChunk(std::unique_ptr<TerrainChunk> terrainChunk)
+    void AddTerrainChunk(int chunkX, int chunkZ, std::unique_ptr<TerrainChunk> terrainChunk)
 	{
-		_terrainChunks.push_back(std::move(terrainChunk));
+        _terrainChunks.emplace(std::make_pair(chunkX, chunkZ), std::move(terrainChunk));
 	}
+
+    bool HasTerrainChunk(int chunkX, int chunkZ) const
+    {
+        return _terrainChunks.contains({ chunkX, chunkZ });
+    }
+
+    void RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius);
 
     void Update(float deltaTime);
     void Render(Renderer& renderer);
 
 private:
     std::vector<std::unique_ptr<Entity>> _entities;
-	std::vector<std::unique_ptr<TerrainChunk>> _terrainChunks;
+    std::map<std::pair<int, int>, std::unique_ptr<TerrainChunk>> _terrainChunks;
     Frustum _frunstum;
 };
