@@ -14,6 +14,10 @@ void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 {
 	std::vector<Vertex> _vertices;
 	std::vector<GLuint> _indices;
+
+	float minTerrainHeight = 0.0f;
+	float maxTerrainHeight = 0.0f;
+
 	for (int z = 0; z <= CHUNK_SIZE; ++z)
 	{
 		for (int x = 0; x <= CHUNK_SIZE; ++x)
@@ -31,8 +35,15 @@ void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 				static_cast<float>(z)
 			);
 			_vertices.push_back({ glm::vec3(static_cast<float>(x), height, static_cast<float>(z)), normal, glm::vec3(1.0f), texUV });
+
+			if (minTerrainHeight > height)
+				minTerrainHeight = height;
+			if (maxTerrainHeight < height)
+				maxTerrainHeight = height;
 		}
 	}
+
+	_aabb = { {_chunkX * CHUNK_SIZE, minTerrainHeight, _chunkZ * CHUNK_SIZE}, {(_chunkX + 1) * CHUNK_SIZE, maxTerrainHeight, (_chunkZ + 1) * CHUNK_SIZE} };
 
 	for (int z = 0; z < CHUNK_SIZE; ++z)
 	{
@@ -48,9 +59,4 @@ void TerrainChunk::GenerateMesh(const TerrainGenerator& generator)
 	}
 
 	_drawCommand.mesh = std::make_shared<Mesh>(_vertices, _indices);
-}
-
-void TerrainChunk::Render(Renderer& renderer) const
-{
-	renderer.Submit(_drawCommand);
 }

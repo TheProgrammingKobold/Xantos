@@ -93,8 +93,8 @@ void Render(Window& window)
 
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
      
-    const int worldWidth = 16;
-    const int worldDepth = 16;
+    const int worldWidth = 128;
+    const int worldDepth = 128;
     const int chunkSize = TerrainChunk::GetChunkSize();
 
     TerrainGenerator terrainGenerator(worldWidth * chunkSize + 1, worldDepth * chunkSize + 1);

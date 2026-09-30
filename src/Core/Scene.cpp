@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "../Render/Camera.h"
 
 void Scene::Update(float deltaTime)
 {
@@ -10,6 +11,8 @@ void Scene::Update(float deltaTime)
 
 void Scene::Render(Renderer& renderer)
 {
+    glm::mat4 matrix = renderer.GetCamera().GetPerspectiveProjection() * renderer.GetCamera().GetViewMatrix();
+    _frunstum.Update(matrix);
     for (const auto& entity : _entities)
     {
         if (!entity->mesh || !entity->material)
@@ -24,6 +27,9 @@ void Scene::Render(Renderer& renderer)
 
 	for (const auto& terrainChunk : _terrainChunks)
 	{
-		terrainChunk->Render(renderer);
+        if (_frunstum.Intersects(terrainChunk->GetChunkBounds()))
+        {
+            renderer.Submit(terrainChunk->GetDrawCommand());
+        }
 	}
 }

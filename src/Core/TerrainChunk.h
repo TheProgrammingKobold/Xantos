@@ -6,6 +6,7 @@
 #include "../Render/Mesh.h"
 #include "../Render/Material.h"
 #include "../Render/Renderer.h"
+#include "AABB.h"
 
 
 class TerrainChunk
@@ -15,13 +16,16 @@ public:
 
 	void GenerateMesh(const TerrainGenerator& generator);
 
-	void Render(Renderer& renderer) const;
+	DrawCommand GetDrawCommand() const { return _drawCommand; }
+	AABB GetChunkBounds() const { return _aabb; }
 
 	static int GetChunkSize() { return CHUNK_SIZE; }
 
 private:
 
 	DrawCommand _drawCommand;
+
+	AABB _aabb;
 
 	constexpr static int CHUNK_SIZE = 16;
 

@@ -35,6 +35,7 @@ add_executable (Xantos
 "src/Core/Scene.cpp"
 "src/Core/Input.cpp"
 "src/Core/TerrainGenerator.cpp"
+"src/Core/Frustum.cpp"
 "src/Game/Player/Player.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"

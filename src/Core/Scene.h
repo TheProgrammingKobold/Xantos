@@ -3,6 +3,7 @@
 #include "../Render/Renderer.h"
 #include "../Game/Entity/Entity.h"
 #include "../Core/TerrainChunk.h"
+#include "../Core/Frustum.h"
 
 class Scene
 {
@@ -31,4 +32,5 @@ public:
 private:
     std::vector<std::unique_ptr<Entity>> _entities;
 	std::vector<std::unique_ptr<TerrainChunk>> _terrainChunks;
+    Frustum _frunstum;
 };

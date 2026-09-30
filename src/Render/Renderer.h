@@ -30,6 +30,8 @@ public:
 
     void Resize(int width, int height);
 
+    Camera& GetCamera() { return _camera; }
+
 private:
 
     void Render3D();
