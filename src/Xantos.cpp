@@ -88,9 +88,12 @@ void Render(Window& window)
 
     Renderer renderer(window, camera);
 
+    // Find some place to puit this in the renderer
+    glfwSwapInterval(0);
+
     auto shader = std::make_shared<Shader>("default_vertex.shader", "default_fragment.shader");
 
-    auto floorTexture = std::make_shared<Texture>("floor.png");
+    auto floorTexture = std::make_shared<Texture>("grass.jpg");
 
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
      
