@@ -98,7 +98,7 @@ void Render(Window& window)
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
      
     const int chunkSize = TerrainChunk::GetChunkSize();
-    constexpr int loadRadius = 10;
+    constexpr int loadRadius = 20;
     constexpr int unloadRadius = loadRadius + 1;
 
     TerrainGenerator terrainGenerator;
@@ -126,6 +126,8 @@ void Render(Window& window)
     double lastTime = glfwGetTime();
     int frameCount = 0;
     std::string fpsText = "FPS: 0\n0.00 ms/frame"; // Holds the text between updates
+    constexpr float FIXED_DELTA_TIME = 1.0f / 60.0f;
+    float physicsAccumulator = 0.0f;
 
     // render loop
     // -----------
@@ -151,13 +153,21 @@ void Render(Window& window)
         events.Dispatch();
 
         Util::UpdateDeltaTime();
-
-        renderer.BeginFrame();
+        const float deltaTime = Util::GetDeltaTime();
         
         // For player and camera compatibility
         player.SetOrientation(camera.GetForward());
 
-        scene.Update(Util::GetDeltaTime());
+        scene.Update(deltaTime);
+
+        physicsAccumulator += deltaTime;
+        while (physicsAccumulator >= FIXED_DELTA_TIME)
+        {
+            scene.PhysicsUpdate(FIXED_DELTA_TIME, terrainGenerator);
+            physicsAccumulator -= FIXED_DELTA_TIME;
+        }
+
+        renderer.BeginFrame();
 
         const auto& position = player.transform.position;
         const int playerChunkX = static_cast<int>(std::floor(position.x / chunkSize));
@@ -180,21 +190,6 @@ void Render(Window& window)
                     scene.AddTerrainChunk(chunkX, chunkZ, std::move(chunk));
                 }
             }
-        }
-
-        const float groundY = terrainGenerator.GetHeight(
-            static_cast<int>(std::round(position.x)),
-            static_cast<int>(std::round(position.z)));
-
-        const float playerBottom = position.y + player.GetAABB().min.y;
-        if (playerBottom < groundY)
-        {
-            player.transform.position.y = groundY - player.GetAABB().min.y;
-			player.SetGrounded(true);
-        }
-        else
-        {
-			player.SetGrounded(false);
         }
 
         camera.SetPosition(player.transform.position);

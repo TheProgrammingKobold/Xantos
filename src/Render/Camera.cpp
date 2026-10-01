@@ -122,6 +122,11 @@ void Camera::SetWidthHeight(int width, int height)
 // Getters
 // --------------------
 
+const glm::vec3& Camera::GetPosition() const
+{
+    return _Position;
+}
+
 const glm::mat4& Camera::GetPerspectiveProjection() const
 {
     return _perspectiveProjection;

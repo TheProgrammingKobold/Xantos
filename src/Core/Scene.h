@@ -35,6 +35,7 @@ public:
     void RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius);
 
     void Update(float deltaTime);
+    void PhysicsUpdate(float fixedDeltaTime, const TerrainGenerator& terrainGenerator);
     void Render(Renderer& renderer);
 
 private:

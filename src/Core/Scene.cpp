@@ -9,6 +9,14 @@ void Scene::Update(float deltaTime)
     }
 }
 
+void Scene::PhysicsUpdate(float fixedDeltaTime, const TerrainGenerator& terrainGenerator)
+{
+    for (auto& entity : _entities)
+    {
+        entity->PhysicsUpdate(fixedDeltaTime, terrainGenerator);
+    }
+}
+
 void Scene::RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius)
 {
     const int radiusSquared = radius * radius;
