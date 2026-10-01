@@ -2,13 +2,18 @@
 
 #include "../Render/Renderer.h"
 #include "../Game/Entity/Entity.h"
-#include "../Core/TerrainChunk.h"
+#include "../Core/TerrainWorld.h"
 #include "../Core/Frustum.h"
 #include <map>
 
 class Scene
 {
 public:
+
+    explicit Scene(std::shared_ptr<Material> terrainMaterial)
+        :_world(std::make_unique<TerrainWorld>(std::move(terrainMaterial)))
+    {
+    }
 
     template<typename T = Entity>
     T& CreateEntity()
@@ -22,24 +27,13 @@ public:
         return reference;
     }
 
-    void AddTerrainChunk(int chunkX, int chunkZ, std::unique_ptr<TerrainChunk> terrainChunk)
-	{
-        _terrainChunks.emplace(std::make_pair(chunkX, chunkZ), std::move(terrainChunk));
-	}
-
-    bool HasTerrainChunk(int chunkX, int chunkZ) const
-    {
-        return _terrainChunks.contains({ chunkX, chunkZ });
-    }
-
-    void RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius);
-
     void Update(float deltaTime);
-    void PhysicsUpdate(float fixedDeltaTime, const TerrainGenerator& terrainGenerator);
+    void UpdateTerrain(float playerX, float playerZ);
+    void PhysicsUpdate(float fixedDeltaTime);
     void Render(Renderer& renderer);
 
 private:
     std::vector<std::unique_ptr<Entity>> _entities;
-    std::map<std::pair<int, int>, std::unique_ptr<TerrainChunk>> _terrainChunks;
+    std::unique_ptr<TerrainWorld> _world;
     Frustum _frunstum;
 };

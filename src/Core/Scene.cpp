@@ -9,25 +9,16 @@ void Scene::Update(float deltaTime)
     }
 }
 
-void Scene::PhysicsUpdate(float fixedDeltaTime, const TerrainGenerator& terrainGenerator)
+void Scene::UpdateTerrain(float playerX, float playerZ)
+{
+    _world->UpdateTerrain(playerX, playerZ);
+}
+
+void Scene::PhysicsUpdate(float fixedDeltaTime)
 {
     for (auto& entity : _entities)
     {
-        entity->PhysicsUpdate(fixedDeltaTime, terrainGenerator);
-    }
-}
-
-void Scene::RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius)
-{
-    const int radiusSquared = radius * radius;
-    for (auto chunk = _terrainChunks.begin(); chunk != _terrainChunks.end();)
-    {
-        const int dx = chunk->first.first - centerChunkX;
-        const int dz = chunk->first.second - centerChunkZ;
-        if (dx * dx + dz * dz > radiusSquared)
-            chunk = _terrainChunks.erase(chunk);
-        else
-            ++chunk;
+        entity->PhysicsUpdate(fixedDeltaTime, _world->GetTerrainGenerator());
     }
 }
 
@@ -47,9 +38,8 @@ void Scene::Render(Renderer& renderer)
             });
     }
 
-    for (const auto& terrainEntry : _terrainChunks)
+    for (const auto& [chunkCoord, terrainChunk] : _world->GetTerrainChunks())
 	{
-        const auto& terrainChunk = terrainEntry.second;
         if (_frunstum.Intersects(terrainChunk->GetChunkBounds()))
         {
             renderer.Submit(terrainChunk->GetDrawCommand());

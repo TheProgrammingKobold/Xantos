@@ -96,19 +96,12 @@ void Render(Window& window)
     auto floorTexture = std::make_shared<Texture>("grass.jpg");
 
     auto floorMaterial = std::make_shared<Material>(shader, floorTexture);
-     
-    const int chunkSize = TerrainChunk::GetChunkSize();
-    constexpr int loadRadius = 20;
-    constexpr int unloadRadius = loadRadius + 1;
 
-    TerrainGenerator terrainGenerator;
-
-    Scene scene;
+    Scene scene(floorMaterial);
 
     auto& player = scene.CreateEntity<Player>();
 
-    constexpr int spawnChunk = 16;
-    player.transform.position = { static_cast<float>(spawnChunk * chunkSize), 10.0f, static_cast<float>(spawnChunk * chunkSize) };
+    player.transform.position = { 0.0f, 10.0f, 0.0f };
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -163,34 +156,17 @@ void Render(Window& window)
         physicsAccumulator += deltaTime;
         while (physicsAccumulator >= FIXED_DELTA_TIME)
         {
-            scene.PhysicsUpdate(FIXED_DELTA_TIME, terrainGenerator);
+            scene.PhysicsUpdate(FIXED_DELTA_TIME);
             physicsAccumulator -= FIXED_DELTA_TIME;
         }
 
         renderer.BeginFrame();
 
         const auto& position = player.transform.position;
-        const int playerChunkX = static_cast<int>(std::floor(position.x / chunkSize));
-        const int playerChunkZ = static_cast<int>(std::floor(position.z / chunkSize));
 
-        scene.RemoveTerrainChunksOutsideRadius(playerChunkX, playerChunkZ, unloadRadius);
-
-        for (int dz = -loadRadius; dz <= loadRadius; ++dz)
-        {
-            for (int dx = -loadRadius; dx <= loadRadius; ++dx)
-            {
-                if (dx * dx + dz * dz > loadRadius * loadRadius)
-                    continue;
-
-                const int chunkX = playerChunkX + dx;
-                const int chunkZ = playerChunkZ + dz;
-                if (!scene.HasTerrainChunk(chunkX, chunkZ))
-                {
-                    auto chunk = std::make_unique<TerrainChunk>(terrainGenerator, floorMaterial, chunkX, chunkZ);
-                    scene.AddTerrainChunk(chunkX, chunkZ, std::move(chunk));
-                }
-            }
-        }
+        scene.UpdateTerrain(position.x, position.z);
+        
+        //TODO put the terrain world updating here or something i dunno.
 
         camera.SetPosition(player.transform.position);
         camera.Rotate(player.GetYaw(), player.GetPitch());
