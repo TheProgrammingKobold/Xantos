@@ -418,7 +418,7 @@ void TextRenderer::RenderText(
         if (c == '\n')
         {
             x = startX;
-            y += _lineHeight * scale;
+            y -= _lineHeight * scale;
             continue;
         }
 

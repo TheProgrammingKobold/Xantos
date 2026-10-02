@@ -171,7 +171,24 @@ void Render(Window& window)
         renderer.Submit(
             {
                 fpsText,
-                {20.0f, 30.0f},
+                {20.0f, 50.0f},
+                0.5f,
+                glm::vec3(1.0f)
+            });
+
+
+        std::string playerPositon = 
+            "Player X: " + 
+            std::to_string(position.x) + 
+            "\nPlayer Y: " + 
+            std::to_string(position.y) + 
+            "\nPlayer Z: " +
+            std::to_string(position.z);
+
+        renderer.Submit(
+            {
+                playerPositon,
+                {20.0f, 200.0f},
                 0.5f,
                 glm::vec3(1.0f)
             });
