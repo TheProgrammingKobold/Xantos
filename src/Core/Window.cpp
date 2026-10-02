@@ -138,7 +138,7 @@ void Window::MouseScrolledCallback(GLFWwindow* window, double xoffset, double yo
     auto* self =
         static_cast<Window*>(glfwGetWindowUserPointer(window));
 
-    self->_events.Post<MouseMovedEvent>(xoffset, yoffset);
+    self->_events.Post<MouseScrolledEvent>(xoffset, yoffset);
 }
 
 void Window::PollEvents()
