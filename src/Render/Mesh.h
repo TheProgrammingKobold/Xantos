@@ -16,6 +16,8 @@ public:
         const std::vector<GLuint>& indices
     );
 
+    ~Mesh();
+
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 

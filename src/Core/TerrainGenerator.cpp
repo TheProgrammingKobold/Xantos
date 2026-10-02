@@ -6,7 +6,7 @@
 float TerrainGenerator::GetHeight(int x, int z) const
 {
     static const siv::PerlinNoise perlin(123456789);
-    constexpr double noiseScale = 0.005;
+    constexpr double noiseScale = 0.002;
     constexpr double heightScale = 480.0;
 
     const double noise = perlin.normalizedOctave2D_01(

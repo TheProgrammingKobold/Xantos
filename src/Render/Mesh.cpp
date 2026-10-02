@@ -56,6 +56,13 @@ Mesh::Mesh(
     _ebo.Unbind();
 }
 
+Mesh::~Mesh()
+{
+    _vao.DeleteObject();
+    _vbo.DeleteObject();
+    _ebo.DeleteObject();
+}
+
 void Mesh::Bind() const
 {
     _vao.Bind();

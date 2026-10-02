@@ -115,7 +115,7 @@ void Player::PhysicsUpdate(
     // --------------------------------
 
     const glm::vec3 targetVelocity =
-        _movementInput * _speed;
+        _movementInput * _speed * 100.0f;
 
     glm::vec3 horizontalVelocity(
         _velocity.x,
@@ -194,7 +194,7 @@ void Player::PhysicsUpdate(
         transform.position.y =
             groundY - _aabb.min.y;
 
-        _velocity.y = 0.0f;
+        _velocity.y = -_velocity.y * 0.75f;
         _grounded = true;
     }
     else

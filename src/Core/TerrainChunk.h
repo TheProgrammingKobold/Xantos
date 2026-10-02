@@ -14,12 +14,20 @@ class TerrainChunk
 public:
 	TerrainChunk(const TerrainGenerator& generator, std::shared_ptr<Material> material, int chunkX, int chunkZ);
 
+	void GenerateGreedyMesh(const TerrainGenerator& generator);
+
+	// Here in case I wanna test the old mesh making algorithm against the new one. 
 	void GenerateMesh(const TerrainGenerator& generator);
+
 
 	DrawCommand GetDrawCommand() const { return _drawCommand; }
 	AABB GetChunkBounds() const { return _aabb; }
 
 	static int GetChunkSize() { return CHUNK_SIZE; }
+
+private:
+
+	void TransformIntoGreedyMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, const TerrainGenerator& generator);
 
 private:
 

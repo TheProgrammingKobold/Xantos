@@ -106,10 +106,6 @@ void Render(Window& window)
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // 2. Define your angle in degrees and convert to radians
-    float angleDegrees = 50.0f;
-    float angleRadians = glm::radians(angleDegrees);
-
     events.Subscribe<WindowResizeEvent>([&](const WindowResizeEvent& event)
         {
             renderer.Resize(event.width, event.height);
