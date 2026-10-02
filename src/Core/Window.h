@@ -55,4 +55,6 @@ private:
     );
 
     static void CursorPositionCallback(GLFWwindow* window, double x, double y);
+    
+    static void MouseScrolledCallback(GLFWwindow* window, double xoffset, double yoffset);
 };

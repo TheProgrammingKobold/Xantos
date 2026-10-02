@@ -169,3 +169,21 @@ public:
         return typeid(MouseCaptureChangedEvent);
     }
 };
+
+class MouseScrolledEvent : public Event
+{
+public:
+
+    MouseScrolledEvent(double xoffset, double yoffset)
+        :xoffset(xoffset), yoffset(yoffset)
+    {
+    }
+
+
+    double xoffset, yoffset;
+
+    std::type_index GetType() const override
+    {
+        return typeid(MouseScrolledEvent);
+    }
+};

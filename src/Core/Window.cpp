@@ -50,6 +50,8 @@ Window::Window(
 
     glfwSetCursorPosCallback(_window, CursorPositionCallback);
 
+    glfwSetScrollCallback(_window, MouseScrolledCallback);
+
     _events.Subscribe<MouseCaptureChangedEvent>([&](const MouseCaptureChangedEvent& event) 
         {
             SetMouseCaptured(event.captured);
@@ -129,6 +131,14 @@ void Window::CursorPositionCallback(
         static_cast<float>(x),
         static_cast<float>(y)
     );
+}
+
+void Window::MouseScrolledCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    auto* self =
+        static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+    self->_events.Post<MouseMovedEvent>(xoffset, yoffset);
 }
 
 void Window::PollEvents()

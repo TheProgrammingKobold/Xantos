@@ -20,7 +20,7 @@ public:
 	void GenerateMesh(const TerrainGenerator& generator);
 
 
-	DrawCommand GetDrawCommand() const { return _drawCommand; }
+	const DrawCommand& GetDrawCommand() const { return _drawCommand; }
 	AABB GetChunkBounds() const { return _aabb; }
 
 	static int GetChunkSize() { return CHUNK_SIZE; }
@@ -35,7 +35,7 @@ private:
 
 	AABB _aabb;
 
-	constexpr static int CHUNK_SIZE = 16;
+	constexpr static int CHUNK_SIZE = 16 * 2;
 
 	int _chunkX;
 	int _chunkZ;
