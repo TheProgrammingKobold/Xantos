@@ -19,12 +19,14 @@ void Scene::Update(
 
 void Scene::UpdateTerrain(
     float playerX,
-    float playerZ
+    float playerZ,
+    uint64_t safeAfterFrame
 )
 {
     _world->UpdateTerrain(
         playerX,
-        playerZ
+        playerZ,
+        safeAfterFrame
     );
 }
 

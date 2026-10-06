@@ -96,7 +96,8 @@ void TerrainWorld::QueueMeshUpload(
 
 void TerrainWorld::UpdateTerrain(
     float playerX,
-    float playerZ
+    float playerZ,
+    uint64_t safeAfterFrame
 )
 {
     ProcessMeshUploadResults();
@@ -104,21 +105,24 @@ void TerrainWorld::UpdateTerrain(
     const int playerChunkX =
         static_cast<int>(
             std::floor(
-                playerX / _chunkSize
+                playerX /
+                _chunkSize
             )
             );
 
     const int playerChunkZ =
         static_cast<int>(
             std::floor(
-                playerZ / _chunkSize
+                playerZ /
+                _chunkSize
             )
             );
 
     RemoveTerrainChunksOutsideRadius(
         playerChunkX,
         playerChunkZ,
-        _unloadRadius
+        _unloadRadius,
+        safeAfterFrame
     );
 
     struct ChunkCandidate
@@ -128,7 +132,8 @@ void TerrainWorld::UpdateTerrain(
         int distanceSquared;
     };
 
-    std::vector<ChunkCandidate> candidates;
+    std::vector<ChunkCandidate>
+        candidates;
 
     for (
         int dz = -_loadRadius;
@@ -146,10 +151,10 @@ void TerrainWorld::UpdateTerrain(
                 dx * dx +
                 dz * dz;
 
-            // Keep the circular loading area.
             if (
                 distanceSquared >
-                _loadRadius * _loadRadius
+                _loadRadius *
+                _loadRadius
                 )
             {
                 continue;
@@ -161,7 +166,6 @@ void TerrainWorld::UpdateTerrain(
             const int chunkZ =
                 playerChunkZ + dz;
 
-            // Already exists, so don't generate it.
             if (
                 HasTerrainChunk(
                     chunkX,
@@ -180,7 +184,6 @@ void TerrainWorld::UpdateTerrain(
         }
     }
 
-    // Closest chunks first.
     std::sort(
         candidates.begin(),
         candidates.end(),
@@ -234,10 +237,12 @@ void TerrainWorld::UpdateTerrain(
     }
 }
 
+
 void TerrainWorld::RemoveTerrainChunksOutsideRadius(
     int centerChunkX,
     int centerChunkZ,
-    int radius
+    int radius,
+    uint64_t safeAfterFrame
 )
 {
     const int radiusSquared =
@@ -247,7 +252,8 @@ void TerrainWorld::RemoveTerrainChunksOutsideRadius(
         auto chunk =
         _terrainChunks.begin();
 
-        chunk != _terrainChunks.end();
+        chunk !=
+        _terrainChunks.end();
         )
     {
         const int dx =
@@ -274,7 +280,9 @@ void TerrainWorld::RemoveTerrainChunksOutsideRadius(
                 _resourceQueue.SubmitMeshRelease({
                     terrainChunk
                         .GetDrawCommand()
-                        .mesh
+                        .mesh,
+
+                    safeAfterFrame
                     });
             }
 

@@ -107,6 +107,11 @@ void Renderer::ProcessResourceRequests(
     std::size_t maxMeshUploadsPerFrame
 )
 {
+    //
+    // First collect release requests.
+    // Do NOT destroy them immediately.
+    //
+
     MeshReleaseRequest releaseRequest;
 
     while (
@@ -115,10 +120,14 @@ void Renderer::ProcessResourceRequests(
         )
         )
     {
-        _assetManager.DestroyMesh(
-            releaseRequest.mesh
+        _pendingMeshReleases.push_back(
+            releaseRequest
         );
     }
+
+    //
+    // Now process uploads.
+    //
 
     for (
         std::size_t i = 0;
@@ -150,6 +159,36 @@ void Renderer::ProcessResourceRequests(
             mesh
             });
     }
+
+    //
+    // Finally destroy meshes that are now safe.
+    //
+
+    for (
+        auto it =
+        _pendingMeshReleases.begin();
+
+        it !=
+        _pendingMeshReleases.end();
+        )
+    {
+        if (
+            _lastRenderedPacketFrame >=
+            it->safeAfterFrame
+            )
+        {
+            _assetManager.DestroyMesh(
+                it->mesh
+            );
+
+            it =
+                _pendingMeshReleases.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
 }
 
 void Renderer::Render(
@@ -169,6 +208,9 @@ void Renderer::Render(
     RenderText(packet);
 
     EndFrame();
+
+    _lastRenderedPacketFrame =
+        packet.frameNumber;
 }
 
 void Renderer::UpdateCamera(

@@ -69,14 +69,36 @@ void RenderAssetManager::DestroyMesh(
     if (!id)
         return;
 
-    _meshes.erase(id.value);
+    auto it =
+        _meshes.find(id.value);
+
+    if (it == _meshes.end())
+    {
+        throw std::runtime_error(
+            "Tried to destroy nonexistent MeshID: " +
+            std::to_string(id.value)
+        );
+    }
+
+    _meshes.erase(it);
 }
 
 Mesh& RenderAssetManager::GetMesh(
     MeshID id
 )
 {
-    return *_meshes.at(id.value);
+    auto it =
+        _meshes.find(id.value);
+
+    if (it == _meshes.end())
+    {
+        throw std::runtime_error(
+            "Invalid MeshID: " +
+            std::to_string(id.value)
+        );
+    }
+
+    return *it->second;
 }
 
 Texture& RenderAssetManager::GetTexture(

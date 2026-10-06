@@ -36,6 +36,11 @@ struct MeshUploadResult
 struct MeshReleaseRequest
 {
     MeshID mesh;
+
+    // The renderer must have rendered a packet
+// with at least this frame number before the
+// mesh may be destroyed.
+    uint64_t safeAfterFrame = 0;
 };
 
 class RenderResourceQueue

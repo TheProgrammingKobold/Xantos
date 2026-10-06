@@ -27,7 +27,7 @@ TerrainChunk::TerrainChunk(
             )
         );
 
-    GenerateGreedyMesh(generator);
+    GenerateMesh(generator);
 }
 
 TerrainMeshData TerrainChunk::TakeMeshData()

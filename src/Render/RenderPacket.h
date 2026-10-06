@@ -19,6 +19,8 @@ struct RenderCameraState
 
 struct RenderPacket
 {
+    uint64_t frameNumber = 0;
+
     RenderCameraState camera;
 
     std::vector<DrawCommand>

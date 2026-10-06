@@ -273,6 +273,8 @@ int main()
         float physicsAccumulator =
             0.0f;
 
+        uint64_t renderFrameNumber = 0;
+
         while (running)
         {
             //
@@ -381,9 +383,13 @@ int main()
             // No OpenGL happens here.
             //
 
+            const uint64_t frameNumber =
+                ++renderFrameNumber;
+
             scene.UpdateTerrain(
                 position.x,
-                position.z
+                position.z,
+                frameNumber + 1
             );
 
             //
@@ -391,6 +397,9 @@ int main()
             //
 
             RenderPacket packet;
+
+            packet.frameNumber =
+                frameNumber;
 
             packet.camera.position =
                 position;

@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 class Camera;
 
@@ -52,7 +53,8 @@ public:
 
     void UpdateTerrain(
         float playerX,
-        float playerZ
+        float playerZ,
+        uint64_t safeAfterFrame
     );
 
     void PhysicsUpdate(

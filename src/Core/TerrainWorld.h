@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <cstdint>
 
 class TerrainWorld
 {
@@ -51,13 +52,15 @@ public:
 
     void UpdateTerrain(
         float playerX,
-        float playerZ
+        float playerZ,
+        uint64_t safeAfterFrame
     );
 
     void RemoveTerrainChunksOutsideRadius(
         int centerChunkX,
         int centerChunkZ,
-        int radius
+        int radius,
+        uint64_t safeAfterFrame
     );
 
     TerrainGenerator GetTerrainGenerator() const

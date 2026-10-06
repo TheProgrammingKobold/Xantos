@@ -13,6 +13,9 @@
 
 #include <cstddef>
 #include <memory>
+#include <cstdint>
+#include <vector>
+
 
 class Window;
 
@@ -79,4 +82,8 @@ private:
 
     int _viewportWidth = 0;
     int _viewportHeight = 0;
+
+    uint64_t _lastRenderedPacketFrame = 0;
+    std::vector<MeshReleaseRequest>
+        _pendingMeshReleases;
 };
