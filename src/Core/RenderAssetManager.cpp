@@ -1,17 +1,17 @@
 #include "RenderAssetManager.h"
 
-
 MeshID RenderAssetManager::LoadMesh(
     const std::vector<Vertex>& vertices,
     const std::vector<GLuint>& indices
 )
 {
-    uint32_t id = _nextMeshID++;
+    const uint32_t id = _nextMeshID++;
 
-    _meshes[id] = std::make_unique<Mesh>(
-        vertices,
-        indices
-    );
+    _meshes[id] =
+        std::make_unique<Mesh>(
+            vertices,
+            indices
+        );
 
     return MeshID{ id };
 }
@@ -20,45 +20,82 @@ TextureID RenderAssetManager::LoadTexture(
     const std::string& texture
 )
 {
-    uint32_t id = _nextTextureID++;
+    const uint32_t id = _nextTextureID++;
 
-    _textures[id] = std::make_unique<Texture>(
-        texture
-    );
+    _textures[id] =
+        std::make_unique<Texture>(
+            texture
+        );
 
     return TextureID{ id };
 }
-
 
 ShaderID RenderAssetManager::LoadShader(
     const std::string& vertexShader,
     const std::string& fragmentShader
 )
 {
-    uint32_t id = _nextShaderID++;
+    const uint32_t id = _nextShaderID++;
 
-    _shaders[id] = std::make_unique<Shader>(
-        vertexShader,
-        fragmentShader
-    );
+    _shaders[id] =
+        std::make_unique<Shader>(
+            vertexShader,
+            fragmentShader
+        );
 
     return ShaderID{ id };
 }
 
+MaterialID RenderAssetManager::LoadMaterial(
+    ShaderID shader,
+    TextureID texture
+)
+{
+    const uint32_t id = _nextMaterialID++;
 
-Mesh& RenderAssetManager::GetMesh(MeshID id)
+    _materials[id] =
+        std::make_unique<Material>(
+            shader,
+            texture
+        );
+
+    return MaterialID{ id };
+}
+
+void RenderAssetManager::DestroyMesh(
+    MeshID id
+)
+{
+    if (!id)
+        return;
+
+    _meshes.erase(id.value);
+}
+
+Mesh& RenderAssetManager::GetMesh(
+    MeshID id
+)
 {
     return *_meshes.at(id.value);
 }
 
-
-Texture& RenderAssetManager::GetTexture(TextureID id)
+Texture& RenderAssetManager::GetTexture(
+    TextureID id
+)
 {
     return *_textures.at(id.value);
 }
 
-
-Shader& RenderAssetManager::GetShader(ShaderID id)
+Shader& RenderAssetManager::GetShader(
+    ShaderID id
+)
 {
     return *_shaders.at(id.value);
+}
+
+Material& RenderAssetManager::GetMaterial(
+    MaterialID id
+)
+{
+    return *_materials.at(id.value);
 }

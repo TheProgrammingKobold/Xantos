@@ -1,39 +1,77 @@
 #pragma once
 
-#include "../Render/Renderer.h"
-#include "../Game/Entity/Entity.h"
+#include "../Core/RenderResourceQueue.h"
 #include "../Core/TerrainWorld.h"
 #include "../Core/Frustum.h"
-#include <map>
+
+#include "../Render/RenderPacket.h"
+
+#include "../Game/Entity/Entity.h"
+
+#include <memory>
+#include <vector>
+
+class Camera;
 
 class Scene
 {
 public:
 
-    explicit Scene(std::shared_ptr<Material> terrainMaterial)
-        :_world(std::make_unique<TerrainWorld>(std::move(terrainMaterial)))
+    Scene(
+        MaterialID terrainMaterial,
+        RenderResourceQueue& resourceQueue
+    )
+        : _world(
+            std::make_unique<TerrainWorld>(
+                terrainMaterial,
+                resourceQueue
+            )
+        )
     {
     }
 
     template<typename T = Entity>
     T& CreateEntity()
     {
-        auto entity = std::make_unique<T>();
+        auto entity =
+            std::make_unique<T>();
 
-        T& reference = *entity;
+        T& reference =
+            *entity;
 
-        _entities.push_back(std::move(entity));
+        _entities.push_back(
+            std::move(entity)
+        );
 
         return reference;
     }
 
-    void Update(float deltaTime);
-    void UpdateTerrain(float playerX, float playerZ);
-    void PhysicsUpdate(float fixedDeltaTime);
-    void Render(Renderer& renderer);
+    void Update(
+        float deltaTime
+    );
+
+    void UpdateTerrain(
+        float playerX,
+        float playerZ
+    );
+
+    void PhysicsUpdate(
+        float fixedDeltaTime
+    );
+
+    void BuildRenderPacket(
+        RenderPacket& packet,
+        const Camera& camera
+    );
 
 private:
-    std::vector<std::unique_ptr<Entity>> _entities;
-    std::unique_ptr<TerrainWorld> _world;
-    Frustum _frunstum;
+
+    std::vector<
+        std::unique_ptr<Entity>
+    > _entities;
+
+    std::unique_ptr<TerrainWorld>
+        _world;
+
+    Frustum _frustum;
 };

@@ -1,48 +1,105 @@
 #include "Scene.h"
+
 #include "../Render/Camera.h"
 
-void Scene::Update(float deltaTime)
+void Scene::Update(
+    float deltaTime
+)
 {
-    for (auto& entity : _entities)
+    for (
+        auto& entity :
+        _entities
+        )
     {
-        entity->Update(deltaTime);
+        entity->Update(
+            deltaTime
+        );
     }
 }
 
-void Scene::UpdateTerrain(float playerX, float playerZ)
+void Scene::UpdateTerrain(
+    float playerX,
+    float playerZ
+)
 {
-    _world->UpdateTerrain(playerX, playerZ);
+    _world->UpdateTerrain(
+        playerX,
+        playerZ
+    );
 }
 
-void Scene::PhysicsUpdate(float fixedDeltaTime)
+void Scene::PhysicsUpdate(
+    float fixedDeltaTime
+)
 {
-    for (auto& entity : _entities)
+    for (
+        auto& entity :
+        _entities
+        )
     {
-        entity->PhysicsUpdate(fixedDeltaTime, _world->GetTerrainGenerator());
+        entity->PhysicsUpdate(
+            fixedDeltaTime,
+            _world->GetTerrainGenerator()
+        );
     }
 }
 
-void Scene::Render(Renderer& renderer)
+void Scene::BuildRenderPacket(
+    RenderPacket& packet,
+    const Camera& camera
+)
 {
-    glm::mat4 matrix = renderer.GetCamera().GetPerspectiveProjection() * renderer.GetCamera().GetViewMatrix();
-    _frunstum.Update(matrix);
-    for (const auto& entity : _entities)
+    const glm::mat4 cameraMatrix =
+        camera.GetPerspectiveProjection() *
+        camera.GetViewMatrix();
+
+    _frustum.Update(
+        cameraMatrix
+    );
+
+    for (
+        const auto& entity :
+        _entities
+        )
     {
-        if (!entity->mesh || !entity->material)
+        if (
+            !entity->mesh ||
+            !entity->material
+            )
+        {
             continue;
+        }
 
-        renderer.Submit({
+        packet.drawCommands.push_back({
             entity->mesh,
             entity->material,
             entity->transform.GetMatrix()
             });
     }
 
-    for (const auto& [chunkCoord, terrainChunk] : _world->GetTerrainChunks())
-	{
-        if (_frunstum.Intersects(terrainChunk->GetChunkBounds()))
+    for (
+        const auto& [chunkCoord, terrainChunk] :
+        _world->GetTerrainChunks()
+        )
+    {
+        if (
+            !terrainChunk->HasMesh()
+            )
         {
-            renderer.Submit(terrainChunk->GetDrawCommand());
+            continue;
         }
-	}
+
+        if (
+            _frustum.Intersects(
+                terrainChunk
+                ->GetChunkBounds()
+            )
+            )
+        {
+            packet.drawCommands.push_back(
+                terrainChunk
+                ->GetDrawCommand()
+            );
+        }
+    }
 }

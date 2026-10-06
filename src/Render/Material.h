@@ -1,23 +1,39 @@
 #pragma once
 
-#include "Shader.h"
-#include "Texture.h"
+#include "../Core/RenderAssetTypes.h"
 
-#include <memory>
+class RenderAssetManager;
+class Shader;
 
 class Material
 {
 public:
+
     Material(
-        std::shared_ptr<Shader> shader,
-        std::shared_ptr<Texture> texture = nullptr
+        ShaderID shader,
+        TextureID texture
     );
 
-    void Bind();
+    void Bind(
+        RenderAssetManager& assets
+    );
 
-    Shader& GetShader();
+    Shader& GetShader(
+        RenderAssetManager& assets
+    );
+
+    ShaderID GetShaderID() const noexcept
+    {
+        return _shader;
+    }
+
+    TextureID GetTextureID() const noexcept
+    {
+        return _texture;
+    }
 
 private:
-    std::shared_ptr<Shader> _shader;
-    std::shared_ptr<Texture> _texture;
+
+    ShaderID _shader;
+    TextureID _texture;
 };

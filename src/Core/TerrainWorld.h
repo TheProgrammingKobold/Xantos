@@ -2,22 +2,46 @@
 
 #include "TerrainChunk.h"
 #include "TerrainGenerator.h"
+#include "RenderResourceQueue.h"
+
+#include <cmath>
 #include <map>
+#include <memory>
+#include <utility>
 
 class TerrainWorld
 {
 public:
 
-    TerrainWorld(std::shared_ptr<Material> material);
+    TerrainWorld(
+        MaterialID material,
+        RenderResourceQueue& resourceQueue
+    );
 
-    void AddTerrainChunk(int chunkX, int chunkZ, std::unique_ptr<TerrainChunk> terrainChunk)
+    void AddTerrainChunk(
+        int chunkX,
+        int chunkZ,
+        std::unique_ptr<TerrainChunk> terrainChunk
+    )
     {
-        _terrainChunks.emplace(std::make_pair(chunkX, chunkZ), std::move(terrainChunk));
+        _terrainChunks.emplace(
+            std::make_pair(
+                chunkX,
+                chunkZ
+            ),
+            std::move(terrainChunk)
+        );
     }
 
-    bool HasTerrainChunk(int chunkX, int chunkZ) const
+    bool HasTerrainChunk(
+        int chunkX,
+        int chunkZ
+    ) const
     {
-        return _terrainChunks.contains({ chunkX, chunkZ });
+        return _terrainChunks.contains({
+            chunkX,
+            chunkZ
+            });
     }
 
     const auto& GetTerrainChunks() const
@@ -25,21 +49,57 @@ public:
         return _terrainChunks;
     }
 
-    void UpdateTerrain(float playerX, float playerZ);
+    void UpdateTerrain(
+        float playerX,
+        float playerZ
+    );
 
-    void RemoveTerrainChunksOutsideRadius(int centerChunkX, int centerChunkZ, int radius);
+    void RemoveTerrainChunksOutsideRadius(
+        int centerChunkX,
+        int centerChunkZ,
+        int radius
+    );
 
-    TerrainGenerator GetTerrainGenerator() const { return _terrainGenerator; }
+    TerrainGenerator GetTerrainGenerator() const
+    {
+        return _terrainGenerator;
+    }
+
+private:
+
+    void ProcessMeshUploadResults();
+
+    void QueueMeshUpload(
+        TerrainChunk& chunk,
+        int chunkX,
+        int chunkZ
+    );
 
 private:
 
     TerrainGenerator _terrainGenerator;
 
-    std::shared_ptr<Material> _material;
+    MaterialID _material;
 
-    std::map<std::pair<int, int>, std::unique_ptr<TerrainChunk>> _terrainChunks;
+    RenderResourceQueue&
+        _resourceQueue;
 
-    const int _chunkSize = TerrainChunk::GetChunkSize();
+    std::map<
+        std::pair<int, int>,
+        std::unique_ptr<TerrainChunk>
+    > _terrainChunks;
+
+    const int _chunkSize =
+        TerrainChunk::GetChunkSize();
+
     const int _loadRadius = 20;
-    const int _unloadRadius = _loadRadius + 1;
+
+    const int _unloadRadius =
+        _loadRadius + 1;
+
+    // CPU generation is now done on the main
+    // thread, so don't generate the entire world
+    // in one frame.
+    static constexpr int
+        MAX_NEW_CHUNKS_PER_UPDATE = 4;
 };

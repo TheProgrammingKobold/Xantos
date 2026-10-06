@@ -4,6 +4,17 @@
 #pragma once
 
 #include <iostream>
+#include <atomic>
+#include <exception>
+#include <future>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <utility>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "Render/VBO.h"
 #include "Render/VAO.h"
 #include "Render/EBO.h"
@@ -14,6 +25,9 @@
 #include "Render/Renderer.h"
 #include "Render/Mesh.h"
 #include "Render/Material.h"
+#include "Core/RenderAssetManager.h"
+#include "Core/RenderQueue.h"
+#include "Core/RenderResourceQueue.h"
 #include "Core/Scene.h"
 #include "Core/Window.h"
 #include "Core/Input.h"

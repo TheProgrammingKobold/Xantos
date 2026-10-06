@@ -1,51 +1,82 @@
 #pragma once
 
-#include <functional>
-#include <vector>
+#include "../Core/RenderAssetManager.h"
+#include "../Core/RenderResourceQueue.h"
+
+#include "RenderPacket.h"
+#include "TextRenderer.h"
+#include "SkyboxRenderer.h"
+#include "Camera.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "DrawCommand.h"
-#include "TextRenderer.h"
-#include "SkyboxRenderer.h"
+#include <cstddef>
+#include <memory>
 
-class Camera;
 class Window;
 
 class Renderer
 {
 public:
-    explicit Renderer(Window& window, Camera& camera);
+
+    explicit Renderer(
+        Window& window
+    );
 
     Renderer(const Renderer&) = delete;
     Renderer& operator=(const Renderer&) = delete;
 
-    void BeginFrame();
-    void ExecuteCommands();
-    void EndFrame();
+    void Render(
+        const RenderPacket& packet
+    );
 
-    void Submit(const DrawCommand& command);
-    void Submit(const TextCommand& command);
+    void ProcessResourceRequests(
+        RenderResourceQueue& resourceQueue,
+        std::size_t maxMeshUploadsPerFrame = 4
+    );
 
-    void Resize(int width, int height);
-
-    Camera& GetCamera() { return _camera; }
+    RenderAssetManager& GetAssetManager() noexcept
+    {
+        return _assetManager;
+    }
 
 private:
 
-    void Render3D();
-    void RenderText();
+    void BeginFrame();
+    void EndFrame();
+
+    void UpdateCamera(
+        const RenderCameraState& state
+    );
+
+    void Render3D(
+        const RenderPacket& packet
+    );
+
+    void RenderText(
+        const RenderPacket& packet
+    );
+
     void RenderSkybox();
 
 private:
+
     Window& _window;
-    Camera& _camera;
-    std::unique_ptr<TextRenderer> _textRenderer;
-	std::unique_ptr<SkyboxRenderer> _skyboxRenderer;
-    std::unique_ptr<Cubemap> _skybox;
+
+    Camera _camera;
+
+    std::unique_ptr<TextRenderer>
+        _textRenderer;
+
+    std::unique_ptr<SkyboxRenderer>
+        _skyboxRenderer;
+
+    std::unique_ptr<Cubemap>
+        _skybox;
 
     RenderAssetManager _assetManager;
-    std::vector<DrawCommand> _drawCommands;
-    std::vector<TextCommand> _textCommands;
+
+    int _viewportWidth = 0;
+    int _viewportHeight = 0;
 };

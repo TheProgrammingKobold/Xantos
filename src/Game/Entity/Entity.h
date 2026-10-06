@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../Core/Transform.h"
+#include "../../Core/RenderAssetTypes.h"
 
 #include <memory>
 
@@ -19,6 +20,6 @@ public:
 
     Transform transform;
 
-    std::shared_ptr<Mesh> mesh;
-    std::shared_ptr<Material> material;
+    MeshID mesh;
+    MaterialID material;
 };

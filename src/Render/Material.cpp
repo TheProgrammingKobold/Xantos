@@ -1,31 +1,43 @@
 #include "Material.h"
 
+#include "../Core/RenderAssetManager.h"
+
+#include "Shader.h"
+#include "Texture.h"
+
 Material::Material(
-    std::shared_ptr<Shader> shader,
-    std::shared_ptr<Texture> texture
+    ShaderID shader,
+    TextureID texture
 )
-    : _shader(std::move(shader)),
-    _texture(std::move(texture))
+    : _shader(shader),
+    _texture(texture)
 {
 }
 
-void Material::Bind()
+void Material::Bind(
+    RenderAssetManager& assets
+)
 {
-    _shader->Activate();
+    Shader& shader =
+        assets.GetShader(_shader);
 
-    if (_texture)
-    {
-        _texture->Bind();
+    Texture& texture =
+        assets.GetTexture(_texture);
 
-        _texture->TexUnit(
-            *_shader,
-            "tex",
-            0
-        );
-    }
+    shader.Activate();
+
+    texture.Bind();
+
+    texture.TexUnit(
+        shader,
+        "tex",
+        0
+    );
 }
 
-Shader& Material::GetShader()
+Shader& Material::GetShader(
+    RenderAssetManager& assets
+)
 {
-    return *_shader;
+    return assets.GetShader(_shader);
 }
