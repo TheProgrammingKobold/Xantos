@@ -37,12 +37,12 @@ add_executable (Xantos
 "src/Core/TerrainGenerator.cpp"
 "src/Core/Frustum.cpp"
 "src/Core/TerrainWorld.cpp"
+"src/Core/RenderAssetManager.cpp"
 "src/Game/Entity/Cube.cpp"
 "src/Game/Player/Player.cpp"
 "src/Util/File.cpp"
 "src/Util/Time.cpp"
-"src/Util/File.cpp" 
- "src/Render/Vertex.h")
+"src/Util/File.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Xantos PROPERTY CXX_STANDARD 20)

@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Mesh.h"
-#include "Material.h"
+#include "../Core/RenderAssetManager.h"
 
 #include <glm/glm.hpp>
 #include <memory>
 
 struct DrawCommand
 {
-    std::shared_ptr<Mesh> mesh;
-    std::shared_ptr<Material> material;
+    MeshID mesh;
+    MaterialID material;
 
     glm::mat4 transform;
 };

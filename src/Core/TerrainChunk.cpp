@@ -7,7 +7,7 @@ TerrainChunk::TerrainChunk(const TerrainGenerator& generator, std::shared_ptr<Ma
 {
 	_drawCommand.material = std::move(material);
 	_drawCommand.transform = glm::translate(glm::mat4(1.0f), glm::vec3(_chunkX * CHUNK_SIZE, 0.0f, _chunkZ * CHUNK_SIZE));
-	GenerateGreedyMesh(generator);
+	GenerateMesh(generator);
 }
 
 void TerrainChunk::GenerateGreedyMesh(const TerrainGenerator& generator)

@@ -45,6 +45,7 @@ private:
 	std::unique_ptr<SkyboxRenderer> _skyboxRenderer;
     std::unique_ptr<Cubemap> _skybox;
 
+    RenderAssetManager _assetManager;
     std::vector<DrawCommand> _drawCommands;
     std::vector<TextCommand> _textCommands;
 };

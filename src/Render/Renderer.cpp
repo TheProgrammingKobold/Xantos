@@ -89,15 +89,16 @@ void Renderer::Render3D()
 {
     for (const auto& command : _drawCommands)
     {
-        command.material->Bind();
+        auto& material = _assetManager.GetMaterial(command.material);
+        material.Bind();
 
-        auto& shader = command.material->GetShader();
+        auto& shader = _assetManager.GetShader(command.material.value);
 
         shader.SetMatrix(_camera.GetMatrix(), "camMatrix");
         shader.SetMatrix(command.transform, "model");
 
 
-        command.mesh->Draw();
+        auto& Mesh = _assetManager.GetMesh(command.mesh);
     }
 
     _drawCommands.clear();
