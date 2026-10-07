@@ -44,3 +44,31 @@ float TerrainGenerator::GetInterpolatedHeight(float x, float z) const
     // Interpolate along Z.
     return hx0 + (hx1 - hx0) * tz;
 }
+
+glm::vec3 TerrainGenerator::GetInterpolatedNormal(
+    float x,
+    float z
+) const
+{
+    constexpr float e = 0.1f;
+
+    const float hL =
+        GetInterpolatedHeight(x - e, z);
+
+    const float hR =
+        GetInterpolatedHeight(x + e, z);
+
+    const float hD =
+        GetInterpolatedHeight(x, z - e);
+
+    const float hU =
+        GetInterpolatedHeight(x, z + e);
+
+    glm::vec3 normal(
+        hL - hR,
+        2.0f * e,
+        hD - hU
+    );
+
+    return glm::normalize(normal);
+}

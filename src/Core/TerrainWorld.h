@@ -95,7 +95,7 @@ private:
     const int _chunkSize =
         TerrainChunk::GetChunkSize();
 
-    const int _loadRadius = 20;
+    const int _loadRadius = 20 * 2;
 
     const int _unloadRadius =
         _loadRadius + 1;

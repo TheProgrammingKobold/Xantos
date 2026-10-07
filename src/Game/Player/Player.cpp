@@ -48,8 +48,8 @@ void Player::Update(float)
     // --------------------------------
 
     _speed = Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)
-        ? 20.0f
-        : 5.0f;
+        ? 20.0f * 8
+        : 5.0f * 8;
 
 
     // --------------------------------
@@ -94,6 +94,44 @@ void Player::PhysicsUpdate(
     float fixedDeltaTime,
     const TerrainGenerator& terrainGenerator)
 {
+    const float dt = fixedDeltaTime;
+
+
+    // --------------------------------
+    // Current terrain
+    // --------------------------------
+
+    const float groundY =
+        terrainGenerator.GetInterpolatedHeight(
+            transform.position.x,
+            transform.position.z
+        );
+
+    const glm::vec3 groundNormal =
+        terrainGenerator.GetInterpolatedNormal(
+            transform.position.x,
+            transform.position.z
+        );
+
+    const float playerBottom =
+        transform.position.y + _aabb.min.y;
+
+
+    // --------------------------------
+    // Check whether we are still touching
+    // the ground BEFORE applying movement
+    // --------------------------------
+
+    if (_grounded)
+    {
+        if (playerBottom >
+            groundY + 0.05f)
+        {
+            _grounded = false;
+        }
+    }
+
+
     // --------------------------------
     // Jump
     // --------------------------------
@@ -111,94 +149,214 @@ void Player::PhysicsUpdate(
 
 
     // --------------------------------
-    // Horizontal movement
+    // Movement
     // --------------------------------
-
-    const glm::vec3 targetVelocity =
-        _movementInput * _speed;
-
-    glm::vec3 horizontalVelocity(
-        _velocity.x,
-        0.0f,
-        _velocity.z
-    );
 
     const bool hasMovementInput =
         glm::length(_movementInput) > 0.0f;
 
-    const float acceleration =
-        hasMovementInput
-        ? (_grounded
-            ? _groundAcceleration
-            : _airAcceleration)
-        : (_grounded
-            ? _groundFriction
-            : _airFriction);
+    const glm::vec3 desiredHorizontalVelocity =
+        _movementInput * _speed * 10.0f;
 
-    const glm::vec3 velocityChange =
-        targetVelocity - horizontalVelocity;
 
-    const float velocityChangeLength =
-        glm::length(velocityChange);
-
-    const float maxVelocityChange =
-        acceleration * fixedDeltaTime;
-
-    if (velocityChangeLength > maxVelocityChange &&
-        velocityChangeLength > 0.0f)
+    if (_grounded)
     {
-        horizontalVelocity +=
-            velocityChange / velocityChangeLength *
-            maxVelocityChange;
+        // --------------------------------
+        // Stay constrained to the terrain
+        // --------------------------------
+
+        //
+        // Remove the component of velocity that
+        // points through the terrain.
+        //
+        _velocity -=
+            groundNormal *
+            glm::dot(_velocity, groundNormal);
+
+
+        // --------------------------------
+        // Gravity along the surface
+        // --------------------------------
+
+        const glm::vec3 gravity(
+            0.0f,
+            -_gravity,
+            0.0f
+        );
+
+        const glm::vec3 gravityAlongSurface =
+            gravity -
+            groundNormal *
+            glm::dot(gravity, groundNormal);
+
+        _velocity +=
+            gravityAlongSurface * dt;
+
+
+        // --------------------------------
+        // Convert player input into a
+        // velocity ALONG the ramp
+        // --------------------------------
+
+        glm::vec3 targetVelocity =
+            desiredHorizontalVelocity;
+
+        targetVelocity -=
+            groundNormal *
+            glm::dot(targetVelocity, groundNormal);
+
+
+        // --------------------------------
+        // Accelerate toward target
+        // --------------------------------
+
+        const float acceleration =
+            hasMovementInput
+            ? _groundAcceleration
+            : _groundFriction;
+
+        const glm::vec3 velocityChange =
+            targetVelocity - _velocity;
+
+        const float changeLength =
+            glm::length(velocityChange);
+
+        const float maxChange =
+            acceleration * dt;
+
+        if (changeLength > maxChange &&
+            changeLength > 0.0f)
+        {
+            _velocity +=
+                velocityChange /
+                changeLength *
+                maxChange;
+        }
+        else
+        {
+            _velocity = targetVelocity;
+        }
     }
     else
     {
-        horizontalVelocity = targetVelocity;
+        // --------------------------------
+        // Air movement
+        // --------------------------------
+
+        glm::vec3 horizontalVelocity(
+            _velocity.x,
+            0.0f,
+            _velocity.z
+        );
+
+        const glm::vec3 targetVelocity =
+            desiredHorizontalVelocity;
+
+        const glm::vec3 velocityChange =
+            targetVelocity -
+            horizontalVelocity;
+
+        const float changeLength =
+            glm::length(velocityChange);
+
+        const float maxChange =
+            (_movementInput.length() > 0.0f
+                ? _airAcceleration
+                : _airFriction) * dt;
+
+        if (changeLength > maxChange &&
+            changeLength > 0.0f)
+        {
+            horizontalVelocity +=
+                velocityChange /
+                changeLength *
+                maxChange;
+        }
+        else
+        {
+            horizontalVelocity =
+                targetVelocity;
+        }
+
+        _velocity.x = horizontalVelocity.x;
+        _velocity.z = horizontalVelocity.z;
+
+
+        // --------------------------------
+        // Gravity
+        // --------------------------------
+
+        _velocity.y -=
+            _gravity * dt;
     }
 
-    _velocity.x = horizontalVelocity.x;
-    _velocity.z = horizontalVelocity.z;
-
 
     // --------------------------------
-    // Gravity
-    // --------------------------------
-
-    if (!_grounded)
-        _velocity.y -= _gravity * fixedDeltaTime;
-
-
-    // --------------------------------
-    // Move
+    // Integrate
     // --------------------------------
 
     transform.position +=
-        _velocity * fixedDeltaTime;
+        _velocity * dt;
 
 
     // --------------------------------
-    // Terrain collision
+    // Terrain collision AFTER movement
     // --------------------------------
 
-    const float groundY =
+    const float newGroundY =
         terrainGenerator.GetInterpolatedHeight(
             transform.position.x,
             transform.position.z
         );
 
-    const float playerBottom =
+    const glm::vec3 newGroundNormal =
+        terrainGenerator.GetInterpolatedNormal(
+            transform.position.x,
+            transform.position.z
+        );
+
+    const float newPlayerBottom =
         transform.position.y + _aabb.min.y;
 
-    if (playerBottom <= groundY)
-    {
-        transform.position.y =
-            groundY - _aabb.min.y;
 
-        _velocity.y = 0.0f;
-        _grounded = true;
+    // --------------------------------
+    // We hit the terrain
+    // --------------------------------
+
+    if (newPlayerBottom < newGroundY)
+    {
+        // Push the player out of the terrain.
+        transform.position.y =
+            newGroundY - _aabb.min.y;
+
+
+        // Remove only velocity that is pointing
+        // INTO the terrain.
+        const float velocityIntoSurface =
+            glm::dot(
+                _velocity,
+                newGroundNormal
+            );
+
+        if (velocityIntoSurface < 0.0f)
+        {
+            // Reflect the velocity away from the surface.
+            _velocity -=
+                newGroundNormal *
+                ((1.0f + _bounciness) *
+                    velocityIntoSurface);
+
+            // We're bouncing, not grounded.
+            _grounded = false;
+        }
+        else
+        {
+            _grounded = true;
+        }
     }
     else
     {
+        // The ground disappeared from underneath us.
         _grounded = false;
     }
 }

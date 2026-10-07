@@ -40,17 +40,21 @@ private:
     // Movement
     float _speed = 5.0f;
 
-    float _groundAcceleration = 30.0f;
-    float _airAcceleration = 10.0f;
+    float _groundAcceleration = 30.0f * 8;
+    float _airAcceleration = 10.0f * 8;
 
     float _groundFriction = 200.0f;
     float _airFriction = 20.0f;
+
+    float _bounciness = 0.5f;
 
     // Physics
     glm::vec3 _velocity{ 0.0f };
 
     float _jumpSpeed = 10.0f;
-    float _gravity = 25.0f;
+    float _gravity = 25.0f * 3;
+
+    float _previousGroundY = 0.0f;
 
     bool _grounded = false;
 
