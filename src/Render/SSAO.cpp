@@ -4,15 +4,22 @@
 
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <random>
 #include <stdexcept>
-#include <string>
+#include <vector>
 
 SSAO::SSAO(
     int width,
     int height
 )
-    : _ssaoShader(
+    : _width(width > 0 ? width : 1),
+    _height(height > 0 ? height : 1),
+    _normalShader(
+        "ssao_normal_vertex.shader",
+        "ssao_normal_fragment.shader"
+    ),
+    _ssaoShader(
         "ssao_screen_vertex.shader",
         "ssao_fragment.shader"
     ),
@@ -21,70 +28,33 @@ SSAO::SSAO(
         "ssao_composite_fragment.shader"
     )
 {
-    _width = width > 0 ? width : 1;
-    _height = height > 0 ? height : 1;
-
-    std::mt19937 generator(0x51A9B8u);
+    std::mt19937 generator(1337u);
     std::uniform_real_distribution<float> random01(0.0f, 1.0f);
-    std::uniform_real_distribution<float> randomSigned(-1.0f, 1.0f);
 
     for (int i = 0; i < KERNEL_SIZE; ++i)
     {
-        glm::vec3 sample;
-
-        do
-        {
-            sample = glm::vec3(
-                randomSigned(generator),
-                randomSigned(generator),
-                random01(generator)
-            );
-        }
-        while (
-            glm::dot(sample, sample) > 1.0f ||
-            glm::dot(sample, sample) < 0.0001f
+        glm::vec3 sample(
+            random01(generator) * 2.0f - 1.0f,
+            random01(generator) * 2.0f - 1.0f,
+            random01(generator)
         );
 
         sample = glm::normalize(sample);
 
-        const float randomLength = random01(generator);
         const float t =
             static_cast<float>(i) /
-            static_cast<float>(KERNEL_SIZE - 1);
+            static_cast<float>(KERNEL_SIZE);
 
         const float scale =
-            0.1f +
-            (t * t) * 0.9f;
+            0.10f +
+            0.90f * t * t;
 
-        _kernel[i] = sample * randomLength * scale;
+        _kernel[i] = sample * scale;
     }
 
     CreateScreenQuad();
     CreateNoiseTexture();
     CreateFramebuffers(_width, _height);
-
-    _ssaoShader.Activate();
-
-    glUniform3fv(
-        glGetUniformLocation(
-            _ssaoShader.GetID(),
-            "samples"
-        ),
-        KERNEL_SIZE,
-        glm::value_ptr(_kernel[0])
-    );
-
-    _ssaoShader.SetInt(0, "sceneDepth");
-    _ssaoShader.SetInt(1, "texNoise");
-    _ssaoShader.SetFloat(DEFAULT_RADIUS, "radius");
-    _ssaoShader.SetFloat(DEFAULT_BIAS, "bias");
-
-    _compositeShader.Activate();
-    _compositeShader.SetInt(0, "sceneColor");
-    _compositeShader.SetInt(1, "ssao");
-
-    glUseProgram(0);
-    glActiveTexture(GL_TEXTURE0);
 }
 
 SSAO::~SSAO()
@@ -93,6 +63,7 @@ SSAO::~SSAO()
     DestroyNoiseTexture();
     DestroyScreenQuad();
 
+    _normalShader.DeleteShader();
     _ssaoShader.DeleteShader();
     _compositeShader.DeleteShader();
 }
@@ -105,8 +76,13 @@ void SSAO::Resize(
     if (width <= 0 || height <= 0)
         return;
 
-    if (_width == width && _height == height)
+    if (
+        width == _width &&
+        height == _height
+        )
+    {
         return;
+    }
 
     _width = width;
     _height = height;
@@ -117,245 +93,488 @@ void SSAO::Resize(
     );
 }
 
-void SSAO::CaptureScene()
+void SSAO::CreateFramebuffers(
+    int width,
+    int height
+)
 {
-    // Copy the scene exactly as it was rendered by the original renderer.
-    // The terrain therefore never has to render into our custom FBO.
+    DestroyFramebuffers();
 
-    glBindFramebuffer(
-        GL_READ_FRAMEBUFFER,
-        0
+    // ============================================================
+    // SCENE FRAMEBUFFER
+    // ============================================================
+
+    glGenFramebuffers(
+        1,
+        &_sceneFBO
     );
 
     glBindFramebuffer(
-        GL_DRAW_FRAMEBUFFER,
+        GL_FRAMEBUFFER,
         _sceneFBO
     );
 
-    glReadBuffer(GL_BACK);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    // ------------------------------------------------------------
+    // Scene color
+    // ------------------------------------------------------------
 
-    glBlitFramebuffer(
-        0,
-        0,
-        _width,
-        _height,
-        0,
-        0,
-        _width,
-        _height,
-        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
-        GL_NEAREST
+    glGenTextures(
+        1,
+        &_sceneColor
     );
 
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        0
-    );
-
-    glViewport(
-        0,
-        0,
-        _width,
-        _height
-    );
-
-    glActiveTexture(GL_TEXTURE0);
-}
-
-void SSAO::Generate(
-    const glm::mat4& projection
-)
-{
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        _ssaoFBO
-    );
-
-    glViewport(
-        0,
-        0,
-        _width,
-        _height
-    );
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-
-    glClearColor(
-        1.0f,
-        1.0f,
-        1.0f,
-        1.0f
-    );
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    _ssaoShader.Activate();
-
-    _ssaoShader.SetMatrix(
-        projection,
-        "projection"
-    );
-
-    _ssaoShader.SetMatrix(
-        glm::inverse(projection),
-        "inverseProjection"
-    );
-
-    _ssaoShader.SetFloat(
-        DEFAULT_RADIUS,
-        "radius"
-    );
-
-    _ssaoShader.SetFloat(
-        DEFAULT_BIAS,
-        "bias"
-    );
-
-    _ssaoShader.SetVec3(
-        glm::vec3(
-            1.0f / static_cast<float>(_width),
-            1.0f / static_cast<float>(_height),
-            0.0f
-        ),
-        "texelSize"
-    );
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(
-        GL_TEXTURE_2D,
-        _sceneDepth
-    );
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(
-        GL_TEXTURE_2D,
-        _noiseTexture
-    );
-
-    _ssaoShader.SetFloat(
-        static_cast<float>(_width) /
-            static_cast<float>(NOISE_SIZE),
-        "noiseScaleX"
-    );
-
-    _ssaoShader.SetFloat(
-        static_cast<float>(_height) /
-            static_cast<float>(NOISE_SIZE),
-        "noiseScaleY"
-    );
-
-    glBindVertexArray(_screenVAO);
-
-    glDrawArrays(
-        GL_TRIANGLE_STRIP,
-        0,
-        4
-    );
-
-    glBindVertexArray(0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        0
-    );
-
-    glViewport(
-        0,
-        0,
-        _width,
-        _height
-    );
-
-    glActiveTexture(GL_TEXTURE0);
-}
-
-void SSAO::Composite()
-{
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        0
-    );
-
-    glViewport(
-        0,
-        0,
-        _width,
-        _height
-    );
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-
-    _compositeShader.Activate();
-
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(
         GL_TEXTURE_2D,
         _sceneColor
     );
 
-    glActiveTexture(GL_TEXTURE1);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA8,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        nullptr
+    );
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_COLOR_ATTACHMENT0,
+        GL_TEXTURE_2D,
+        _sceneColor,
+        0
+    );
+
+    // ------------------------------------------------------------
+    // Scene depth
+    //
+    // IMPORTANT:
+    // Use 24-bit depth to match the typical GLFW default
+    // framebuffer depth buffer.
+    // ------------------------------------------------------------
+
+    glGenTextures(
+        1,
+        &_sceneDepth
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _sceneDepth
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_DEPTH_COMPONENT24,
+        width,
+        height,
+        0,
+        GL_DEPTH_COMPONENT,
+        GL_UNSIGNED_INT,
+        nullptr
+    );
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D,
+        _sceneDepth,
+        0
+    );
+
+    // ------------------------------------------------------------
+    // Scene framebuffer draw configuration
+    // ------------------------------------------------------------
+
+    const GLenum sceneDrawBuffers[] =
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+
+    glDrawBuffers(
+        1,
+        sceneDrawBuffers
+    );
+
+    CheckFramebuffer(
+        _sceneFBO,
+        "SSAO scene framebuffer"
+    );
+
+    // ============================================================
+    // NORMAL FRAMEBUFFER
+    // ============================================================
+
+    glGenFramebuffers(
+        1,
+        &_normalFBO
+    );
+
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        _normalFBO
+    );
+
+    // ------------------------------------------------------------
+    // Normal color
+    // ------------------------------------------------------------
+
+    glGenTextures(
+        1,
+        &_normalColor
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _normalColor
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA16F,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_FLOAT,
+        nullptr
+    );
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_COLOR_ATTACHMENT0,
+        GL_TEXTURE_2D,
+        _normalColor,
+        0
+    );
+
+    // ------------------------------------------------------------
+    // Reuse captured scene depth
+    // ------------------------------------------------------------
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D,
+        _sceneDepth,
+        0
+    );
+
+    const GLenum normalDrawBuffers[] =
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+
+    glDrawBuffers(
+        1,
+        normalDrawBuffers
+    );
+
+    CheckFramebuffer(
+        _normalFBO,
+        "SSAO normal framebuffer"
+    );
+
+    // ============================================================
+    // SSAO FRAMEBUFFER
+    // ============================================================
+
+    glGenFramebuffers(
+        1,
+        &_ssaoFBO
+    );
+
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        _ssaoFBO
+    );
+
+    // ------------------------------------------------------------
+    // SSAO color
+    // ------------------------------------------------------------
+
+    glGenTextures(
+        1,
+        &_ssaoColor
+    );
+
     glBindTexture(
         GL_TEXTURE_2D,
         _ssaoColor
     );
 
-    glBindVertexArray(_screenVAO);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR
+    );
 
-    glDrawArrays(
-        GL_TRIANGLE_STRIP,
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
         0,
-        4
+        GL_R8,
+        width,
+        height,
+        0,
+        GL_RED,
+        GL_UNSIGNED_BYTE,
+        nullptr
     );
 
-    glBindVertexArray(0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glDepthMask(GL_TRUE);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(
-        GL_SRC_ALPHA,
-        GL_ONE_MINUS_SRC_ALPHA
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_COLOR_ATTACHMENT0,
+        GL_TEXTURE_2D,
+        _ssaoColor,
+        0
     );
 
-    glActiveTexture(GL_TEXTURE0);
+    const GLenum ssaoDrawBuffers[] =
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+
+    glDrawBuffers(
+        1,
+        ssaoDrawBuffers
+    );
+
+    CheckFramebuffer(
+        _ssaoFBO,
+        "SSAO framebuffer"
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );
+
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        0
+    );
+}
+
+void SSAO::DestroyFramebuffers()
+{
+    if (_ssaoColor != 0)
+    {
+        glDeleteTextures(
+            1,
+            &_ssaoColor
+        );
+
+        _ssaoColor = 0;
+    }
+
+    if (_ssaoFBO != 0)
+    {
+        glDeleteFramebuffers(
+            1,
+            &_ssaoFBO
+        );
+
+        _ssaoFBO = 0;
+    }
+
+    if (_normalColor != 0)
+    {
+        glDeleteTextures(
+            1,
+            &_normalColor
+        );
+
+        _normalColor = 0;
+    }
+
+    if (_normalFBO != 0)
+    {
+        glDeleteFramebuffers(
+            1,
+            &_normalFBO
+        );
+
+        _normalFBO = 0;
+    }
+
+    if (_sceneColor != 0)
+    {
+        glDeleteTextures(
+            1,
+            &_sceneColor
+        );
+
+        _sceneColor = 0;
+    }
+
+    if (_sceneDepth != 0)
+    {
+        glDeleteTextures(
+            1,
+            &_sceneDepth
+        );
+
+        _sceneDepth = 0;
+    }
+
+    if (_sceneFBO != 0)
+    {
+        glDeleteFramebuffers(
+            1,
+            &_sceneFBO
+        );
+
+        _sceneFBO = 0;
+    }
+}
+
+void SSAO::CheckFramebuffer(
+    GLuint framebuffer,
+    const char* name
+) const
+{
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        framebuffer
+    );
+
+    const GLenum status =
+        glCheckFramebufferStatus(
+            GL_FRAMEBUFFER
+        );
+
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        throw std::runtime_error(
+            std::string(name) +
+            " is incomplete. OpenGL status: " +
+            std::to_string(status)
+        );
+    }
 }
 
 void SSAO::CreateScreenQuad()
 {
     constexpr float vertices[] =
     {
+        // position    // uv
         -1.0f, -1.0f,  0.0f, 0.0f,
          1.0f, -1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
+         1.0f,  1.0f,  1.0f, 1.0f,
+
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0f,  1.0f,  0.0f, 1.0f
     };
 
-    glGenVertexArrays(1, &_screenVAO);
-    glGenBuffers(1, &_screenVBO);
+    glGenVertexArrays(
+        1,
+        &_screenVAO
+    );
 
-    glBindVertexArray(_screenVAO);
+    glGenBuffers(
+        1,
+        &_screenVBO
+    );
+
+    glBindVertexArray(
+        _screenVAO
+    );
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
@@ -386,12 +605,18 @@ void SSAO::CreateScreenQuad()
         GL_FLOAT,
         GL_FALSE,
         4 * sizeof(float),
-        reinterpret_cast<void*>(2 * sizeof(float))
+        reinterpret_cast<void*>(
+            2 * sizeof(float)
+            )
     );
 
     glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        0
+    );
+
     glBindVertexArray(0);
 }
 
@@ -399,52 +624,52 @@ void SSAO::DestroyScreenQuad()
 {
     if (_screenVBO != 0)
     {
-        glDeleteBuffers(1, &_screenVBO);
+        glDeleteBuffers(
+            1,
+            &_screenVBO
+        );
+
         _screenVBO = 0;
     }
 
     if (_screenVAO != 0)
     {
-        glDeleteVertexArrays(1, &_screenVAO);
+        glDeleteVertexArrays(
+            1,
+            &_screenVAO
+        );
+
         _screenVAO = 0;
     }
 }
 
 void SSAO::CreateNoiseTexture()
 {
-    std::array<glm::vec3, NOISE_SIZE * NOISE_SIZE> noise{};
+    std::mt19937 generator(7331u);
+    std::uniform_real_distribution<float> random01(0.0f, 1.0f);
 
-    std::mt19937 generator(0xBADC0DEu);
-    std::uniform_real_distribution<float> randomSigned(-1.0f, 1.0f);
+    std::array<
+        glm::vec3,
+        NOISE_SIZE* NOISE_SIZE
+    > noise{};
 
     for (glm::vec3& value : noise)
     {
-        value = glm::normalize(
-            glm::vec3(
-                randomSigned(generator),
-                randomSigned(generator),
-                0.0f
-            )
+        value = glm::vec3(
+            random01(generator) * 2.0f - 1.0f,
+            random01(generator) * 2.0f - 1.0f,
+            0.0f
         );
     }
 
-    glGenTextures(1, &_noiseTexture);
+    glGenTextures(
+        1,
+        &_noiseTexture
+    );
 
     glBindTexture(
         GL_TEXTURE_2D,
         _noiseTexture
-    );
-
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGB16F,
-        NOISE_SIZE,
-        NOISE_SIZE,
-        0,
-        GL_RGB,
-        GL_FLOAT,
-        noise.data()
     );
 
     glTexParameteri(
@@ -469,6 +694,18 @@ void SSAO::CreateNoiseTexture()
         GL_TEXTURE_2D,
         GL_TEXTURE_WRAP_T,
         GL_REPEAT
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGB16F,
+        NOISE_SIZE,
+        NOISE_SIZE,
+        0,
+        GL_RGB,
+        GL_FLOAT,
+        noise.data()
     );
 
     glBindTexture(
@@ -490,321 +727,390 @@ void SSAO::DestroyNoiseTexture()
     }
 }
 
-void SSAO::CreateFramebuffers(
-    int width,
-    int height
-)
+void SSAO::CaptureScene()
 {
-    DestroyFramebuffers();
+    // ============================================================
+    // Verify source depth
+    // ============================================================
 
-    // Scene color + depth.
-    glGenFramebuffers(
-        1,
-        &_sceneFBO
-    );
+    //float sourceDepth = 0.0f;
+
+    //glBindFramebuffer(
+    //    GL_FRAMEBUFFER,
+    //    0
+    //);
+
+    //glReadPixels(
+    //    _width / 2,
+    //    _height / 2,
+    //    1,
+    //    1,
+    //    GL_DEPTH_COMPONENT,
+    //    GL_FLOAT,
+    //    &sourceDepth
+    //);
+
+    //std::cout
+    //    << "Default framebuffer center depth: "
+    //    << sourceDepth
+    //    << '\n';
+
+    // ============================================================
+    // Copy default framebuffer -> scene framebuffer
+    // ============================================================
 
     glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        _sceneFBO
-    );
-
-    glGenTextures(
-        1,
-        &_sceneColor
-    );
-
-    glBindTexture(
-        GL_TEXTURE_2D,
-        _sceneColor
-    );
-
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA8,
-        width,
-        height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        nullptr
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_NEAREST
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MAG_FILTER,
-        GL_NEAREST
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_CLAMP_TO_EDGE
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_CLAMP_TO_EDGE
-    );
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        GL_COLOR_ATTACHMENT0,
-        GL_TEXTURE_2D,
-        _sceneColor,
+        GL_READ_FRAMEBUFFER,
         0
     );
 
-    glGenTextures(
-        1,
-        &_sceneDepth
+    glBindFramebuffer(
+        GL_DRAW_FRAMEBUFFER,
+        _sceneFBO
     );
+
+    glReadBuffer(
+        GL_BACK
+    );
+
+    glDrawBuffer(
+        GL_COLOR_ATTACHMENT0
+    );
+
+    glBlitFramebuffer(
+        0,
+        0,
+        _width,
+        _height,
+
+        0,
+        0,
+        _width,
+        _height,
+
+        GL_COLOR_BUFFER_BIT |
+        GL_DEPTH_BUFFER_BIT,
+
+        GL_NEAREST
+    );
+
+    // Check immediately.
+    const GLenum blitError = glGetError();
+
+    if (blitError != GL_NO_ERROR)
+    {
+        std::cerr
+            << "SSAO depth/color blit OpenGL error: 0x"
+            << std::hex
+            << blitError
+            << std::dec
+            << '\n';
+    }
+
+    // ============================================================
+    // Read back captured depth
+    // ============================================================
+
+    //float capturedDepth = 0.0f;
+
+    //glBindFramebuffer(
+    //    GL_FRAMEBUFFER,
+    //    _sceneFBO
+    //);
+
+    //glReadPixels(
+    //    _width / 2,
+    //    _height / 2,
+    //    1,
+    //    1,
+    //    GL_DEPTH_COMPONENT,
+    //    GL_FLOAT,
+    //    &capturedDepth
+    //);
+
+    //std::cout
+    //    << "Captured scene depth: "
+    //    << capturedDepth
+    //    << '\n';
+
+    // ============================================================
+    // Restore default framebuffer
+    // ============================================================
+
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        0
+    );
+}
+
+void SSAO::BeginNormalPass()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, _normalFBO);
+
+    glViewport(
+        0,
+        0,
+        _width,
+        _height
+    );
+
+    glEnable(GL_DEPTH_TEST);
+
+    // The depth texture already contains the depth from the scene.
+    // Only fragments at that visible depth should render.
+    glDepthFunc(GL_LEQUAL);
+
+    // Do not overwrite the captured scene depth.
+    glDepthMask(GL_FALSE);
+
+    glDisable(GL_BLEND);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void SSAO::EndNormalPass()
+{
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        0
+    );
+
+    glDepthMask(GL_TRUE);
+}
+
+void SSAO::Generate(
+    const glm::mat4& projection
+)
+{
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        _ssaoFBO
+    );
+
+    glDrawBuffer(
+        GL_COLOR_ATTACHMENT0
+    );
+
+    glViewport(
+        0,
+        0,
+        _width,
+        _height
+    );
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+
+    glClearColor(
+        1.0f,
+        1.0f,
+        1.0f,
+        1.0f
+    );
+
+    glClear(
+        GL_COLOR_BUFFER_BIT
+    );
+
+    _ssaoShader.Activate();
+
+    _ssaoShader.SetMatrix(
+        projection,
+        "projection"
+    );
+
+    const glm::mat4 inverseProjection =
+        glm::inverse(projection);
+
+    _ssaoShader.SetMatrix(
+        inverseProjection,
+        "inverseProjection"
+    );
+
+    _ssaoShader.SetFloat(
+        DEFAULT_RADIUS,
+        "radius"
+    );
+
+    _ssaoShader.SetFloat(
+        DEFAULT_BIAS,
+        "bias"
+    );
+
+    _ssaoShader.SetVec3(
+        glm::vec3(
+            1.0f / static_cast<float>(_width),
+            1.0f / static_cast<float>(_height),
+            0.0f
+        ),
+        "texelSize"
+    );
+
+    _ssaoShader.SetFloat(
+        static_cast<float>(_width) /
+        static_cast<float>(NOISE_SIZE),
+        "noiseScaleX"
+    );
+
+    _ssaoShader.SetFloat(
+        static_cast<float>(_height) /
+        static_cast<float>(NOISE_SIZE),
+        "noiseScaleY"
+    );
+
+    glUniform3fv(
+        _ssaoShader.GetUniform("samples"),
+        KERNEL_SIZE,
+        glm::value_ptr(_kernel[0])
+    );
+
+    // ------------------------------------------------------------
+    // Scene depth
+    // ------------------------------------------------------------
+
+    glActiveTexture(GL_TEXTURE0);
 
     glBindTexture(
         GL_TEXTURE_2D,
         _sceneDepth
     );
 
-    glTexImage2D(
-        GL_TEXTURE_2D,
+    _ssaoShader.SetInt(
         0,
-        GL_DEPTH_COMPONENT24,
-        width,
-        height,
+        "sceneDepth"
+    );
+
+    // ------------------------------------------------------------
+    // Scene normals
+    // ------------------------------------------------------------
+
+    glActiveTexture(GL_TEXTURE1);
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _normalColor
+    );
+
+    _ssaoShader.SetInt(
+        1,
+        "sceneNormal"
+    );
+
+    // ------------------------------------------------------------
+    // Noise
+    // ------------------------------------------------------------
+
+    glActiveTexture(GL_TEXTURE2);
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _noiseTexture
+    );
+
+    _ssaoShader.SetInt(
+        2,
+        "texNoise"
+    );
+
+    // ------------------------------------------------------------
+    // Fullscreen quad
+    // ------------------------------------------------------------
+
+    glBindVertexArray(
+        _screenVAO
+    );
+
+    glDrawArrays(
+        GL_TRIANGLES,
         0,
-        GL_DEPTH_COMPONENT,
-        GL_FLOAT,
-        nullptr
+        6
     );
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_NEAREST
-    );
+    glBindVertexArray(0);
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MAG_FILTER,
-        GL_NEAREST
-    );
+    // ------------------------------------------------------------
+    // Cleanup
+    // ------------------------------------------------------------
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_CLAMP_TO_EDGE
-    );
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_CLAMP_TO_EDGE
-    );
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_COMPARE_MODE,
-        GL_NONE
-    );
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        GL_DEPTH_ATTACHMENT,
-        GL_TEXTURE_2D,
-        _sceneDepth,
-        0
-    );
-
-    const GLenum sceneDrawBuffer =
-        GL_COLOR_ATTACHMENT0;
-
-    glDrawBuffers(
-        1,
-        &sceneDrawBuffer
-    );
-
-    CheckFramebuffer(
-        _sceneFBO,
-        "Scene framebuffer"
-    );
-
-    // SSAO output.
-    glGenFramebuffers(
-        1,
-        &_ssaoFBO
-    );
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindFramebuffer(
         GL_FRAMEBUFFER,
-        _ssaoFBO
+        0
+    );
+}
+
+void SSAO::Composite()
+{
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        0
     );
 
-    glGenTextures(
-        1,
-        &_ssaoColor
+    glDrawBuffer(
+        GL_BACK
     );
+
+    glViewport(
+        0,
+        0,
+        _width,
+        _height
+    );
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+
+    _compositeShader.Activate();
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _sceneColor
+    );
+
+    _compositeShader.SetInt(
+        0,
+        "sceneColor"
+    );
+
+    glActiveTexture(GL_TEXTURE1);
 
     glBindTexture(
         GL_TEXTURE_2D,
         _ssaoColor
     );
 
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_R8,
-        width,
-        height,
-        0,
-        GL_RED,
-        GL_UNSIGNED_BYTE,
-        nullptr
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_NEAREST
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MAG_FILTER,
-        GL_NEAREST
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_CLAMP_TO_EDGE
-    );
-
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_CLAMP_TO_EDGE
-    );
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        GL_COLOR_ATTACHMENT0,
-        GL_TEXTURE_2D,
-        _ssaoColor,
-        0
-    );
-
-    const GLenum ssaoDrawBuffer =
-        GL_COLOR_ATTACHMENT0;
-
-    glDrawBuffers(
+    _compositeShader.SetInt(
         1,
-        &ssaoDrawBuffer
+        "ssao"
     );
 
-    CheckFramebuffer(
-        _ssaoFBO,
-        "SSAO framebuffer"
+    glBindVertexArray(
+        _screenVAO
     );
 
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        0
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        6
     );
 
-    glBindTexture(
-        GL_TEXTURE_2D,
-        0
-    );
+    glBindVertexArray(0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glActiveTexture(GL_TEXTURE0);
-}
-
-void SSAO::DestroyFramebuffers()
-{
-    if (_sceneDepth != 0)
-    {
-        glDeleteTextures(
-            1,
-            &_sceneDepth
-        );
-
-        _sceneDepth = 0;
-    }
-
-    if (_sceneColor != 0)
-    {
-        glDeleteTextures(
-            1,
-            &_sceneColor
-        );
-
-        _sceneColor = 0;
-    }
-
-    if (_sceneFBO != 0)
-    {
-        glDeleteFramebuffers(
-            1,
-            &_sceneFBO
-        );
-
-        _sceneFBO = 0;
-    }
-
-    if (_ssaoColor != 0)
-    {
-        glDeleteTextures(
-            1,
-            &_ssaoColor
-        );
-
-        _ssaoColor = 0;
-    }
-
-    if (_ssaoFBO != 0)
-    {
-        glDeleteFramebuffers(
-            1,
-            &_ssaoFBO
-        );
-
-        _ssaoFBO = 0;
-    }
-}
-
-void SSAO::CheckFramebuffer(
-    GLuint framebuffer,
-    const char* name
-) const
-{
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        framebuffer
-    );
-
-    const GLenum status =
-        glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-    glBindFramebuffer(
-        GL_FRAMEBUFFER,
-        0
-    );
-
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        throw std::runtime_error(
-            std::string(name) +
-            " is incomplete. OpenGL status code: " +
-            std::to_string(
-                static_cast<unsigned int>(status)
-            )
-        );
-    }
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -206,7 +206,80 @@ void Renderer::Render(
     Render3D(packet);
     _ssao->CaptureScene();
 
-    // Generate simple raw SSAO from depth. No blur.
+    // Render the actual mesh vertex normals into a separate normal texture.
+    // This is a second geometry pass, but it never replaces or modifies the
+    // working scene render path above. The pass is depth-tested against the
+    // captured scene depth, so only visible geometry contributes normals.
+    _ssao->BeginNormalPass();
+
+    Shader& normalShader =
+        _ssao->GetNormalShader();
+
+    normalShader.Activate();
+
+    normalShader.SetMatrix(
+        _camera.GetMatrix(),
+        "camMatrix"
+    );
+
+    normalShader.SetMatrix(
+        _camera.GetViewMatrix(),
+        "viewMatrix"
+    );
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _ssao->GetSceneDepthTexture()
+    );
+
+    normalShader.SetInt(
+        0,
+        "sceneDepth"
+    );
+
+    normalShader.SetVec3(
+        glm::vec3(
+            static_cast<float>(_viewportWidth),
+            static_cast<float>(_viewportHeight),
+            0.0f
+        ),
+        "screenSize"
+    );
+
+    for (
+        const auto& command :
+        packet.drawCommands
+    )
+    {
+        if (
+            !command.mesh ||
+            !command.material
+        )
+        {
+            continue;
+        }
+
+        Mesh& mesh =
+            _assetManager.GetMesh(
+                command.mesh
+            );
+
+        normalShader.SetMatrix(
+            command.transform,
+            "model"
+        );
+
+        mesh.Draw();
+    }
+
+    _ssao->EndNormalPass();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Generate simple raw SSAO from depth + the actual mesh normals.
+    // No blur and no temporal accumulation.
     _ssao->Generate(
         _camera.GetPerspectiveProjection()
     );

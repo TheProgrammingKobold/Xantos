@@ -206,7 +206,7 @@ int main()
             terrainMaterial =
                 startupFuture.get();
         }
-        catch (
+        catch ( 
             const std::exception& error
             )
         {
