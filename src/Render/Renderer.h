@@ -7,6 +7,7 @@
 #include "TextRenderer.h"
 #include "SkyboxRenderer.h"
 #include "Camera.h"
+#include "SSAO.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -15,7 +16,6 @@
 #include <memory>
 #include <cstdint>
 #include <vector>
-
 
 class Window;
 
@@ -77,6 +77,9 @@ private:
 
     std::unique_ptr<Cubemap>
         _skybox;
+
+    std::unique_ptr<SSAO>
+        _ssao;
 
     RenderAssetManager _assetManager;
 

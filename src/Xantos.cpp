@@ -284,7 +284,7 @@ int main()
             glfwPollEvents();
 
             window.ApplyPendingMouseCapture();
-
+             
             if (
                 window.ShouldClose()
                 )
@@ -292,7 +292,7 @@ int main()
                 running = false;
                 break;
             }
-
+               
             //
             // EventBus is now dispatched by the
             // game/main thread too.
@@ -300,7 +300,7 @@ int main()
 
             events.Dispatch();
 
-            Util::UpdateDeltaTime();
+            Util::UpdateDeltaTime();  
 
             const float deltaTime =
                 Util::GetDeltaTime();

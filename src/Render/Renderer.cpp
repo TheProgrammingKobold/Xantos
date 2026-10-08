@@ -7,7 +7,6 @@
 
 #include <array>
 #include <stdexcept>
-#include <utility>
 
 Renderer::Renderer(
     Window& window
@@ -33,7 +32,7 @@ Renderer::Renderer(
     if (!gladLoadGLLoader(
         reinterpret_cast<GLADloadproc>(
             glfwGetProcAddress
-            )
+        )
     ))
     {
         throw std::runtime_error(
@@ -44,6 +43,8 @@ Renderer::Renderer(
     glfwSwapInterval(0);
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -59,6 +60,12 @@ Renderer::Renderer(
 
     _viewportHeight =
         _window.GetHeight();
+
+    if (_viewportWidth <= 0)
+        _viewportWidth = 1;
+
+    if (_viewportHeight <= 0)
+        _viewportHeight = 1;
 
     glViewport(
         0,
@@ -100,6 +107,12 @@ Renderer::Renderer(
         std::make_unique<Cubemap>(
             faces
         );
+
+    _ssao =
+        std::make_unique<SSAO>(
+            _viewportWidth,
+            _viewportHeight
+        );
 }
 
 void Renderer::ProcessResourceRequests(
@@ -107,33 +120,24 @@ void Renderer::ProcessResourceRequests(
     std::size_t maxMeshUploadsPerFrame
 )
 {
-    //
-    // First collect release requests.
-    // Do NOT destroy them immediately.
-    //
-
     MeshReleaseRequest releaseRequest;
 
     while (
         resourceQueue.TryGetMeshRelease(
             releaseRequest
         )
-        )
+    )
     {
         _pendingMeshReleases.push_back(
             releaseRequest
         );
     }
 
-    //
-    // Now process uploads.
-    //
-
     for (
         std::size_t i = 0;
         i < maxMeshUploadsPerFrame;
         ++i
-        )
+    )
     {
         MeshUploadRequest uploadRequest;
 
@@ -141,7 +145,7 @@ void Renderer::ProcessResourceRequests(
             !resourceQueue.TryGetMeshUpload(
                 uploadRequest
             )
-            )
+        )
         {
             break;
         }
@@ -157,25 +161,18 @@ void Renderer::ProcessResourceRequests(
             uploadRequest.chunkX,
             uploadRequest.chunkZ,
             mesh
-            });
+        });
     }
 
-    //
-    // Finally destroy meshes that are now safe.
-    //
-
     for (
-        auto it =
-        _pendingMeshReleases.begin();
-
-        it !=
-        _pendingMeshReleases.end();
-        )
+        auto it = _pendingMeshReleases.begin();
+        it != _pendingMeshReleases.end();
+    )
     {
         if (
             _lastRenderedPacketFrame >=
             it->safeAfterFrame
-            )
+        )
         {
             _assetManager.DestroyMesh(
                 it->mesh
@@ -199,12 +196,41 @@ void Renderer::Render(
         packet.camera
     );
 
+    if (_viewportWidth <= 0 || _viewportHeight <= 0)
+        return;
+
     BeginFrame();
 
-    RenderSkybox();
-
+    // IMPORTANT: keep the original 3D render path on the default
+    // framebuffer. SSAO only copies the finished color/depth afterward.
     Render3D(packet);
+    _ssao->CaptureScene();
 
+    // Generate simple raw SSAO from depth. No blur.
+    _ssao->Generate(
+        _camera.GetPerspectiveProjection()
+    );
+
+    // Put scene color * AO onto the default framebuffer. The original
+    // scene depth is already present there, so nothing needs restoring.
+    _ssao->Composite();
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(
+        GL_SRC_ALPHA,
+        GL_ONE_MINUS_SRC_ALPHA
+    );
+
+    glActiveTexture(GL_TEXTURE0);
+
+    RenderSkybox();
     RenderText(packet);
 
     EndFrame();
@@ -217,11 +243,6 @@ void Renderer::UpdateCamera(
     const RenderCameraState& state
 )
 {
-    _camera.SetWidthHeight(
-        state.width,
-        state.height
-    );
-
     _camera.SetPosition(
         state.position
     );
@@ -231,10 +252,18 @@ void Renderer::UpdateCamera(
         state.pitch
     );
 
+    if (state.width <= 0 || state.height <= 0)
+        return;
+
+    _camera.SetWidthHeight(
+        state.width,
+        state.height
+    );
+
     if (
         state.width != _viewportWidth ||
         state.height != _viewportHeight
-        )
+    )
     {
         _viewportWidth =
             state.width;
@@ -257,11 +286,43 @@ void Renderer::UpdateCamera(
             _viewportWidth,
             _viewportHeight
         );
+
+        _ssao->Resize(
+            _viewportWidth,
+            _viewportHeight
+        );
     }
 }
 
 void Renderer::BeginFrame()
 {
+    glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        0
+    );
+
+    glViewport(
+        0,
+        0,
+        _viewportWidth,
+        _viewportHeight
+    );
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(
+        GL_SRC_ALPHA,
+        GL_ONE_MINUS_SRC_ALPHA
+    );
+
+    glActiveTexture(GL_TEXTURE0);
+
     glClearColor(
         0.01f,
         0.01f,
@@ -282,12 +343,12 @@ void Renderer::Render3D(
     for (
         const auto& command :
         packet.drawCommands
-        )
+    )
     {
         if (
             !command.mesh ||
             !command.material
-            )
+        )
         {
             continue;
         }
@@ -321,7 +382,6 @@ void Renderer::Render3D(
             "model"
         );
 
-        // Your Mesh class needs to expose Draw().
         mesh.Draw();
     }
 }
@@ -336,7 +396,7 @@ void Renderer::RenderText(
     for (
         const auto& command :
         packet.textCommands
-        )
+    )
     {
         _textRenderer->RenderText(
             command.text,
